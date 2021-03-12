@@ -1,24 +1,26 @@
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-	<script src="https://raw.githubusercontent.com/nodeca/pako/master/dist/pako.js"></script>
+	<script src="pako.js"></script>
 	<style>
-th {
-	text-align: center;
-	border: 1px solid white;
-}
-td {
-  border: 1px solid white;
-  word-wrap:break-word;
-}
-table {
-	table-layout: fixed;
-	width: 100%;
-	border: 1px solid white;
-	border-collapse: collapse;
-	font-family: monospace;
-	padding: 2px;
-}
+		th {
+			text-align: center;
+			border: 1px solid white;
+		}
+
+		td {
+			border: 1px solid white;
+			word-wrap: break-word;
+		}
+
+		table {
+			table-layout: fixed;
+			width: 100%;
+			border: 1px solid white;
+			border-collapse: collapse;
+			font-family: monospace;
+			padding: 2px;
+		}
 </style>
 	<title>Java TLS Debug Log Parser</title>
 </head> 
@@ -30,26 +32,77 @@ table {
 <!-- <pre id="file-content"></pre> -->
 
 <script>
+	//let output;
+	//output = pako.inflate(new Uint8Array([31,139,8,0,0,0,0,0,4,10,
+	//	28,204,177,14,194,48,12,4,208,95,177,60,87,253,128,238,32,177,48,241,3,33,185,148,32,26,71,182,17,67,213,127,175,204,120,186,119,183,51,84,69,121,217,57,75,1,47,124,137,124,115,108,119,241,171,124,123,225,137,55,152,165,53,218,199,11,100,3,185,213,134,66,242,124,35,59,253,146,81,23,167,26,156,90,39,15,229,162,152,39,138,197,80,201,48,163,154,218,7,133,92,104,133,255,85,22,213,184,24,42,3,234,13,54,243,113,156,0,0,0,255,255,
+	//	3,0,107,131,231,180,150,0,0,0]));
+	/*output = pako.inflate(new Uint8Array([
+			31,139,8,0,0,0,0,0,0,3,149,90,219,114,219,54,16,253,149,84,207,169,198,241,37,51,206,155,107,59,174,92,
+			203,142,108,249,162,116,58,28,144,132,72,88,224,37,0,40,91,238,244,223,187,32,117,33,129,37,65,189,116,
+			20,18,36,119,207,238,158,61,187,238,191,3,89,4,1,149,114,240,77,137,130,126,30,36,240,155,68,116,240,109,
+			112,153,190,102,171,79,171,172,16,159,84,182,160,233,111,131,207,3,82,168,216,43,255,5,7,232,234,58,246,
+			175,2,118,199,174,71,143,31,163,47,183,108,36,71,233,253,73,112,62,250,58,90,228,47,79,231,215,167,67,56,
+			244,37,56,124,90,189,28,158,196,254,243,163,62,204,200,115,152,255,60,95,31,190,42,175,197,179,195,91,30,
+			28,141,85,120,117,42,126,62,31,179,155,243,235,149,127,248,206,31,158,239,63,70,175,185,63,122,125,90,204,
+			146,241,241,56,153,28,141,63,30,79,110,15,47,15,199,23,103,239,179,233,125,50,155,78,14,239,30,174,67,120,
+			38,15,14,190,47,252,103,94,192,51,7,65,250,196,245,181,217,203,132,221,189,194,249,233,228,248,110,122,118,
+			112,119,49,145,163,228,233,88,27,58,158,206,222,111,47,22,71,183,175,209,241,237,159,7,195,199,211,139,201,
+			81,113,243,188,120,185,188,252,242,49,123,203,166,39,191,95,165,191,190,38,103,55,55,119,201,120,113,58,255,
+			145,139,191,198,175,111,211,3,192,163,144,84,164,36,209,112,249,44,98,33,92,154,51,33,213,109,117,237,15,22,
+			141,46,62,157,133,9,75,225,78,78,69,194,164,100,89,10,104,255,61,32,214,229,161,164,65,150,134,68,172,30,0,
+			117,136,202,80,20,198,137,128,19,248,49,103,84,200,33,75,242,76,40,243,126,33,21,21,103,41,225,43,201,228,
+			144,190,235,51,94,230,191,210,64,201,230,89,146,231,156,5,68,105,131,134,49,145,49,11,50,145,15,67,202,169,
+			162,198,209,128,109,95,41,40,9,141,143,102,66,80,94,190,8,187,107,154,20,50,213,97,136,15,111,8,98,79,80,
+			153,195,63,41,242,66,69,34,249,64,150,52,156,20,84,48,138,189,209,6,210,122,75,72,20,185,103,81,172,228,247,
+			130,207,25,231,9,77,213,48,23,25,252,166,158,164,74,177,52,146,195,0,158,52,209,8,180,97,169,186,202,150,58,
+			250,105,64,55,87,60,217,250,57,203,104,12,102,109,211,198,98,82,149,101,227,126,158,1,78,172,229,38,238,144,
+			160,191,10,42,213,58,17,12,148,2,2,128,235,255,122,107,191,157,209,169,224,240,42,227,189,0,34,155,37,30,156,
+			48,108,129,99,33,124,157,17,46,135,10,62,223,241,70,13,85,251,139,180,83,63,68,166,189,133,112,156,165,225,67,
+			76,4,252,218,35,160,108,73,130,149,167,189,39,124,23,215,132,164,154,230,154,118,133,75,29,205,112,154,101,124,
+			19,160,173,171,85,22,75,157,152,5,55,75,73,80,253,254,109,185,205,9,96,25,174,171,174,181,86,30,168,194,240,142,
+			104,74,5,225,15,27,75,89,148,102,0,167,199,153,84,120,62,98,113,116,165,23,70,30,77,255,215,190,132,217,91,202,51,
+			136,81,152,5,75,26,108,0,176,45,184,175,128,185,160,10,188,175,28,243,160,46,230,12,50,33,160,158,138,225,193,56,
+			227,237,220,81,226,129,217,93,39,61,55,94,144,90,20,39,142,238,10,65,152,11,206,243,44,210,185,82,64,238,128,1,
+			60,196,106,187,150,207,96,69,145,163,229,105,154,137,157,169,174,141,203,212,44,109,99,97,142,103,106,1,48,160,
+			53,93,199,10,195,146,165,75,120,113,38,86,189,241,129,3,50,3,242,246,88,58,207,68,210,70,243,157,36,142,101,109,
+			119,52,100,225,39,157,76,180,107,88,54,193,88,244,143,178,120,141,163,108,119,204,112,249,5,16,16,4,199,139,120,
+			6,10,9,240,67,209,119,118,6,204,146,93,76,244,47,169,88,164,57,150,40,37,152,95,128,119,120,86,98,223,175,242,2,
+			9,14,86,217,37,97,96,213,220,25,74,120,152,3,31,25,54,81,161,32,233,224,25,180,249,53,9,159,201,69,75,242,109,
+			194,101,23,185,34,114,129,93,223,118,68,55,47,216,17,196,148,140,25,63,18,9,90,214,34,42,124,214,161,232,91,74,
+			101,65,194,109,111,73,56,11,219,42,169,70,231,36,80,108,201,212,30,197,106,234,23,140,231,235,80,99,28,177,5,21,
+			187,137,80,61,70,101,155,142,88,182,247,90,166,121,178,72,18,0,31,7,178,150,255,29,25,20,172,124,136,172,88,184,
+			196,202,142,34,108,248,204,142,173,155,230,174,228,188,16,154,109,249,19,206,118,149,146,92,129,42,72,188,152,
+			18,174,98,44,243,77,70,71,105,223,236,31,238,100,166,9,32,175,163,92,96,206,225,104,161,173,213,104,191,54,
+			151,154,242,189,71,251,195,62,100,233,223,30,88,97,157,111,211,223,170,239,225,112,118,200,184,156,49,79,
+			167,191,241,210,90,43,192,5,191,33,218,16,234,173,24,170,76,119,253,179,148,107,29,81,41,171,148,19,159,114,
+			173,102,209,30,223,126,28,43,106,55,221,97,158,25,141,65,107,54,24,105,151,32,161,164,7,5,217,107,196,176,56,
+			199,78,223,134,130,235,57,137,96,236,188,155,51,221,129,223,250,81,138,208,168,16,213,131,136,113,245,230,133,
+			234,107,83,78,96,31,111,145,192,221,137,212,237,35,154,255,93,29,170,191,204,178,98,230,154,23,108,98,216,118,
+			9,199,128,183,99,225,254,230,109,85,160,202,242,246,76,178,209,219,41,169,53,175,183,137,168,214,185,178,143,
+			116,111,78,100,142,38,84,5,177,125,194,53,26,81,89,3,101,1,224,199,218,38,127,212,25,44,129,208,82,51,215,76,120,3,177,3,221,141,76,175,62,176,127,82,180,65,176,85,143,45,4,3,166,246,44,169,102,76,58,160,105,210,50,230,111,67,7,109,228,156,23,131,115,188,116,176,143,227,251,111,123,220,219,13,67,184,152,9,176,43,36,23,218,189,68,116,215,46,203,33,95,172,249,195,46,55,83,55,148,88,131,202,246,105,76,248,220,157,254,174,233,16,165,123,179,39,244,88,66,226,2,204,53,49,34,14,151,83,94,151,234,222,236,110,32,78,21,243,132,140,152,155,100,163,21,161,234,160,43,16,232,158,184,254,64,101,160,199,82,69,57,36,59,173,42,203,157,45,245,146,233,147,244,216,84,101,55,14,68,233,4,156,18,225,233,40,43,166,117,2,184,183,119,116,156,40,108,217,19,113,189,214,203,250,211,96,251,238,7,93,31,33,159,173,235,29,44,139,116,196,192,93,238,150,165,229,44,239,38,155,94,67,143,115,70,219,240,172,46,220,156,68,196,158,205,54,99,100,159,38,110,235,99,76,85,55,215,101,219,92,233,19,39,44,45,49,168,122,10,52,44,224,93,9,130,196,125,141,78,72,3,177,202,77,101,186,219,117,106,185,146,11,186,100,244,173,84,34,221,56,110,214,173,54,77,237,179,78,52,251,15,166,166,177,125,27,186,161,181,77,177,116,33,250,7,177,238,158,218,166,144,123,196,14,103,178,174,229,228,182,59,246,231,5,20,88,164,121,244,25,146,48,174,106,174,1,218,70,32,252,142,165,250,122,140,111,13,129,130,21,78,215,78,4,59,111,37,1,94,205,245,206,143,76,112,181,187,61,215,99,88,244,101,236,103,68,132,40,14,13,126,118,253,61,110,211,93,176,60,113,83,30,54,161,118,204,151,136,198,113,255,225,135,211,37,229,251,26,214,103,87,213,158,130,205,221,169,171,6,154,27,162,57,75,67,109,148,11,22,83,8,32,83,48,166,75,59,66,237,144,18,85,151,236,19,231,230,20,230,208,215,205,17,166,155,169,186,33,170,169,25,52,173,187,50,203,41,163,118,91,4,247,86,5,255,31,35,26,123,195,210,207,127,62,15,74,206,24,124,27,12,254,251,31,153,105,84,81,10,35,0,0]
+	));*/
+	//var final = new TextDecoder().decode(output);
+	//console.log('f: '+final);
 
-function myFunction(col) {
-  // Declare variables
-	let input, filter, table, tr, td, i, txtValue;
-	input = document.getElementById("myInput"+col);
-  filter = input.value.toUpperCase();
-  table = document.getElementById("myTable");
-  tr = table.getElementsByTagName("tr");
+	function myFunction(col) {
+		// Declare variables
+		let input, filter, table, tr, td, i, txtValue;
+		input = document.getElementById("myInput" + col);
+		filter = input.value.toUpperCase();
+		table = document.getElementById("myTable");
+		tr = table.getElementsByTagName("tr");
 
-  // Loop through all table rows, and hide those who don't match the search query
-  for (i = 0; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[col];
-    if (td) {
-      txtValue = td.textContent || td.innerText;
-      if (txtValue.toUpperCase().indexOf(filter) > -1) {
-        tr[i].style.display = "";
-      } else {
-        tr[i].style.display = "none";
-      }
-    }
+		// Loop through all table rows, and hide those who don't match the search query
+		for (i = 0; i < tr.length; i++) {
+			td = tr[i].getElementsByTagName("td")[col];
+			if (td) {
+				txtValue = td.textContent || td.innerText;
+				if (txtValue.toUpperCase().indexOf(filter) > -1) {
+					tr[i].style.display = "";
+				} else {
+					tr[i].style.display = "none";
+				}
+			}
   }
 }
 
@@ -115,6 +168,7 @@ function displayContents(contents) {
 						</tr>\
 					</thead>\
 					<tbody>';
+	const lines = contents.replace('\r\n', '\n').split('\n');
 	let hexes = [];
 	let pkt = '';
 	let time = '';
@@ -125,57 +179,227 @@ function displayContents(contents) {
 	let host = '';
 	let charac = '';
 	let tr_style = '';
-	const lines = contents.replace('\r\n', '\n').split('\n');
-	for(let line = 0; line < lines.length; line++){
+	let header = '';
+	let body = '';
+	//const test = [];
+	let hexes_body = [];
+	let sliced = false;
+	let dec_body = [];
+	let chunks = [];
+	let next_packet_is_chunk = false;
+	let gzip_chunks = [];
+	//let head = [];
+	for (let line = 0; line < lines.length; line++) {
 		//console.log('line: ' + line);
 		if ((lines[line].includes('laintext before ENCRYPTION (') || lines[line].includes('laintext after DECRYPTION ('))) {
-			time   = lines[line].split('|')[4];
+			time = lines[line].split('|')[4];
 			thread = lines[line].split('|')[3];
-			thrdID = lines[line].split('|')[2].replace(' ','');
-			level  = lines[line].split('|')[1];
-			//pkt=pkt + '<tr><td>' + lines[line].split('|')[3] + '</td><td>' + lines[line].split('|')[2].replace(' ','') + '</td><td>' + lines[line].split('|')[1] + '</td><td>';
-			if (lines[line].includes('laintext before ENCRYPTION (')) {io = 'SENDING';tr_style=" style='background-color:#000040' "}
-			if (lines[line].includes('laintext after DECRYPTION (' )) {io = 'RECVING';tr_style=" style='background-color:#400000' "}
-			//console.log("line[" + line + "]: " + lines[line]);
+			thrdID = lines[line].split('|')[2].replace(' ', '');
+			level = lines[line].split('|')[1];
+			if (lines[line].includes('laintext before ENCRYPTION (')) {
+				io = 'SENDING';
+				tr_style = " style='background-color:#000040' "
+			}
+			if (lines[line].includes('laintext after DECRYPTION (')) {
+				io = 'RECVING';
+				tr_style = " style='background-color:#400000' "
+			}
 			line++;
-			//console.log("line[" + line + "]: " + lines[line]);
-			while (lines[line].length>3) {
-				//console.log("lines[" + line + "]: " + lines[line]);
-				hexes = hexes.concat(lines[line].substring(8, 57).replace('   ',' ').split(' '));
-				//console.log('htc: ' + htc);
-				//console.log('out: ' + out);
-				//console.log("hexes: " + hexes);
+			//console.log('begin packet parse on line '+line+' | next_packet_is_chunk: '+next_packet_is_chunk);
+			while (lines[line].length > 3) {
+				hexes = hexes.concat(lines[line].substring(8, 57).replace('   ', ' ').split(' '));
 				line++;
 			}
-			for(let hx = 0; hx < hexes.length; hx++){
-				switch(hexes[hx]) {
-					case '0A': charac = ''; break;
-					case '0D': charac = '<br>\r\n'; break;
-					case '3C': if (hexes[hx+1]!=='2F') charac = '<br>\r\n&lt;'; else charac = '&lt;'; break;//<
-					case '3E': charac = '&gt;'; break;//>
-					default  : charac = String.fromCharCode(parseInt(hexes[hx],16));
+			//console.log('line: '+line);
+			for (let hx = 0; hx < hexes.length; hx++) {
+				//test = test.concat(parseInt(hexes[hx], 16));
+				switch (hexes[hx]) {
+					case '0A':
+						charac = '';
+						break; // 0A - LF \n
+					case '0D':
+						charac = '<br>';
+						if (!sliced && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
+							hexes_body = hexes.slice(hx + 4);
+							sliced = true;
+						}
+						break; //0D - CR \r
+					case '3C':
+						if (hexes[hx + 1] !== '2F') charac = '<br>&lt;'; else charac = '&lt;';
+						break; //3C - <
+					case '3E':
+						charac = '&gt;';
+						break; //3E - >
+					default  :
+						charac = String.fromCharCode(parseInt(hexes[hx], 16));
 				}
-				//console.log("hexes[" + hx + "]: " + hexes[hx] + " | charac: " + charac);
-				pkt=pkt+charac;
-				
-				//console.log('htc length: ' + htc.length);
+				pkt = pkt + charac;
+
 			}
-			//console.log('pkt: ' + pkt);
-			//out=out + pkt + '</td></tr>\n';
-		//pkt=pkt.replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;").replace("&","&amp;");
-		//console.log("pkt: " + pkt);
-		if (pkt.includes('Host: ')) host=pkt.split('Host: ')[1].split('<br>')[0];
-		out = out + '<tr' + tr_style + '><td style="width=3000px">' + time + '</td><td>' + thread + '</td><td>' + thrdID + '</td><td>' + level + '</td><td>' + io + '</td><td>' + host + '</td><td>'  + pkt + '</td></tr>\n';
-		time   = '';
-		thread = '';
-		thrdID = '';
-		level  = '';
-		io     = '';
-		host   = '';
-		pkt    = '';
-		hexes  = [];
+
+			if (next_packet_is_chunk) {
+				for (let i = 0; i < hexes.length; i++) {
+					if (hexes[i] !== '')
+						dec_body = dec_body.concat(parseInt(hexes[i], 16));
+				}
+				//console.log('line: ' + line + ' | next_packet_is_chunk: ' + next_packet_is_chunk + ' | dec_body: ' + dec_body);
+			} else
+				for (let i = 0; i < hexes_body.length; i++) {
+					if (hexes_body[i] !== '')
+						dec_body = dec_body.concat(parseInt(hexes_body[i], 16));
+				}
+			if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST')) {
+				header = pkt.split('<br><br>')[0];
+				if (header.includes('Content-Encoding: gzip')) body = '';
+				else body = pkt.split('<br><br>')[1];
+				//console.log('body: ' + body);
+			} else {
+				header = '';
+				if (next_packet_is_chunk) body = '';
+				else body = pkt;
+			}
+
+			//pkt = pkt.replace('<br><br>', '<br><hr><br>');
+			if (header.includes('Host: ')) host = header.split('Host: ')[1].split('<br>')[0];
+			if (header.includes('Content-Encoding: gzip') || next_packet_is_chunk) {
+				//body='';
+				if (header.includes('Transfer-Encoding: chunked') || next_packet_is_chunk) {
+					//console.log('gzip chunked line: '+line);
+					let new_line = [];
+					for (let i = 0; i < dec_body.length; i++) {
+						if (dec_body[i] === 13 && dec_body[i + 1] === 10)
+							new_line = new_line.concat(i);
+					}
+					//console.log('line: ' + line + ' | new_line length: ' + new_line.length + ' | NLs: ' + new_line + ' | dec_bd_len: ' + dec_body.length);
+					//console.log('dec_body: '+dec_body);
+					//console.log('new_line[0]: ' + new_line[0]);
+					if (new_line.length === 0) {
+						//console.log('mode 1');
+						//console.log('1 gzip_chunks: ' + gzip_chunks);
+						//console.log('1 dec_body: '+ dec_body);
+						gzip_chunks = gzip_chunks.concat(dec_body);
+						dec_body = [];
+						body = body + '<br>GZIP Chunks decoded in the next packet';
+						//console.log('all body data');
+					} else if (new_line[0] + 2 === dec_body.length) {
+						//console.log('mode 2');
+						//console.log('2 gzip_chunks: ' + gzip_chunks);
+						//console.log('2 dec_body: '+ dec_body.slice(0,new_line[0]));
+						gzip_chunks = gzip_chunks.concat(dec_body.slice(0, new_line[0]));
+						dec_body = [];
+						body = body + '<br>GZIP Chunks decoded in the next packet';
+						//console.log('dec_sliced: ' + dec_body.slice(0,new_line[0]) + ' | orig dec: '+ dec_body);
+					} else if (new_line.length === 1) {
+						//console.log('mode 3');
+						//console.log('3 gzip_chunks: ' + gzip_chunks);
+						//console.log('3 dec_body: '+ dec_body.slice(0,new_line[0]));
+						chunks[0] = dec_body.slice(0, new_line[0]);
+						chunks[1] = dec_body.slice(new_line[0]).slice(2);
+						for (let chnk = 0; chnk < chunks.length; chnk++) {
+							//console.log('chunks['+chnk+'][0]: '+String.fromCharCode(chunks[chnk][0]));
+							if (chnk % 2 === 0) {
+								/*for (let i = 0; i < chunks[chnk].length; i++) {
+									head = head.concat(chunks[chnk][i]);
+								}*/
+								//console.log('line: ' + line + ' | chk_hd: ' + head);
+								//head = [];
+								if (String.fromCharCode(chunks[chnk][0]) === '0') {
+									next_packet_is_chunk = false;
+									//console.log('next_packet_is_chunk is: ' + next_packet_is_chunk + ' | setting to false')
+								} else {
+									//console.log('next_packet_is_chunk is: ' + next_packet_is_chunk + ' | setting to true');
+									next_packet_is_chunk = true;
+									body = body + '<br>GZIP Chunks decoded in the next packet'
+								}
+							} else {
+								//console.log('3 gzip_chunks: ' + gzip_chunks);
+								//console.log('3 chunks['+chnk+']: '+ chunks[chnk]);
+								gzip_chunks = gzip_chunks.concat(chunks[chnk]);
+								dec_body = [];
+								chunks = [];
+							}
+
+
+						}
+					} else {
+						//console.log('mode 4');
+						//console.log('4 gzip_chunks: ' + gzip_chunks);
+						//console.log('4 dec_body: '+ dec_body.slice(0,new_line[0]));
+						chunks[0] = dec_body.slice(0, new_line[0]);
+						for (let i = 1; i < new_line.length; i++) {
+							//console.log('i: '+i + ' | new_line.length: ' + new_line.length);
+							chunks[i] = dec_body.slice(new_line[i - 1], new_line[i]).slice(2);
+						}
+						//console.log('line: ' + line + ' | chunks len: ' + chunks.length);
+						for (let chnk = 0; chnk < chunks.length; chnk++) {
+							if (chnk % 2 === 0) {
+								//console.log('if chnk: '+chnk);
+								/*for (let i = 0; i < chunks[chnk].length; i++) {
+									head = head.concat(chunks[chnk][i]);
+								}*/
+								//console.log('line: ' + line + ' | chk_hd: ' + head);
+								//head = [];
+								next_packet_is_chunk = String.fromCharCode(chunks[chnk][0]) !== '0';
+							} else {
+								//console.log('else chnk: '+chnk);
+								//console.log('4 gzip_chunks: ' + gzip_chunks);
+								//console.log('4 chunks['+chnk+']: '+ chunks[chnk]);
+								gzip_chunks = gzip_chunks.concat(chunks[chnk]);
+
+							}
+
+
+						}
+						dec_body = [];
+						chunks = [];
+						if (next_packet_is_chunk) body = body + '<br>GZIP Chunks decoded in the next packet'
+					}
+					if (!next_packet_is_chunk) {
+						//console.log('line: ' + line + ' | gzip to decode: ' + gzip_chunks);
+						try {
+							body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(gzip_chunks)));
+						} catch (err) {
+							console.error(err);
+						}
+						//console.log('decoded: ' + new TextDecoder().decode(pako.inflate(new Uint8Array(gzip_chunks))));
+						gzip_chunks = [];
+					}
+				} else {
+					try {
+						body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(dec_body)));
+					} catch (err) {
+						console.error(err);
+					}
+				}
+			}
+			console.log('line: ' + line + ' | zgip header: ' + header.includes('Content-Encoding: gzip') + ' | nxt_chnk: ' + next_packet_is_chunk + ' | hdr_lg: ' + header.length);
+			if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) || header === '') pkt = header + '<br>' + body;
+			else pkt = header + '<br><hr><br>' + body;
+			out = out + '<tr' + tr_style + '>' +
+					'<td style="width=3000px">' + time + '</td>' +
+					'<td>' + thread + '</td>' +
+					'<td>' + thrdID + '</td>' +
+					'<td>' + level + '</td>' +
+					'<td>' + io + '</td>' +
+					'<td>' + host + '</td>' +
+					'<td>' + pkt + '</td>' +
+					'</tr>\n';
+			time = '';
+			thread = '';
+			thrdID = '';
+			level = '';
+			io = '';
+			host = '';
+			pkt = '';
+			hexes = [];
+			sliced = false;
+			chunks = [];
+			header = '';
+			body = '';
+			dec_body = [];
 		}
-    }
+		//next_packet_is_chunk=false;
+	}
 	element.innerHTML = out + "</tbody></table>";
 }
 
