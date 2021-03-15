@@ -372,7 +372,7 @@ function displayContents(contents) {
 					}
 				}
 			}
-			console.log('line: ' + line + ' | zgip header: ' + header.includes('Content-Encoding: gzip') + ' | nxt_chnk: ' + next_packet_is_chunk + ' | hdr_lg: ' + header.length);
+			//console.log('line: ' + line + ' | zgip header: ' + header.includes('Content-Encoding: gzip') + ' | nxt_chnk: ' + next_packet_is_chunk + ' | hdr_lg: ' + header.length);
 			if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) || header === '') pkt = header + '<br>' + body;
 			else pkt = header + '<br><hr><br>' + body;
 			out = out + '<tr' + tr_style + '>' +
