@@ -26,8 +26,11 @@
 </head> 
 
 <body style = "text-align:left;background-color:#202020;color:white;" id = "body"> 
-<div style="text-align: center;"><div id="space"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></div><h3>Load your log file:</h3>
-<input type="file" id="file-input" /></div>
+<div style="text-align: center;">
+	<div id="space"><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br></div>
+	<h3>Load your log file:</h3>
+	Thread name to decode (ex. sub-scan-0): <input id="thread-input" name="thread-input" type="text"><br><br>
+	<input id="file-input" type="file"/></div>
 <div id="file-content"><p id="afterend"></p></div>
 <!-- <pre id="file-content"></pre> -->
 
@@ -168,7 +171,9 @@ function displayContents(contents) {
 						</tr>\
 					</thead>\
 					<tbody>';
-	const lines = contents.replace('\r\n', '\n').split('\n');
+	const lines_all = contents.replace('\r\n', '\n').split('\n');
+	//console.log("done");
+	let lines = [];
 	let hexes = [];
 	let pkt = '';
 	let time = '';
@@ -188,13 +193,31 @@ function displayContents(contents) {
 	let chunks = [];
 	let next_packet_is_chunk = false;
 	let gzip_chunks = [];
+	//let Cont_Len=0;
 	//let head = [];
-	for (let line = 0; line < lines.length; line++) {
-		//console.log('line: ' + line);
-		if ((lines[line].includes('laintext before ENCRYPTION (') || lines[line].includes('laintext after DECRYPTION ('))) {
+	let pkt_len = 0;
+
+	for (let line = 1; line < lines_all.length; line++) {
+		if (!(lines_all[line].startsWith("javax.net.ssl|") && !lines_all[line].includes('|' + document.getElementById('thread-input').value + '|'))) {
+			lines.push(lines_all[line]);
+		}
+	}
+//console.log(lines.length);
+	for (let line = 1; line < lines.length; line++) {//console.log("r: " + line);
+		if (
+				lines[line].includes('|' + document.getElementById('thread-input').value + '|') &&
+				(lines[line].includes('laintext before ENCRYPTION (') ||
+						(lines[line].includes('laintext after DECRYPTION (')
+								//&& lines[line - 1].includes('application_data')
+						)) &&
+				!lines[line - 1].includes('handshake,')
+		) {//console.log(line);
+
+			if (lines[line - 1].split("application_data, length = ")[1] > 0)
+				pkt_len = lines[line - 1].split("application_data, length = ")[1];
 			time = lines[line].split('|')[4];
 			thread = lines[line].split('|')[3];
-			thrdID = lines[line].split('|')[2].replace(' ', '');
+			thrdID = lines[line].split('|')[2].replaceAll(' ', '');
 			level = lines[line].split('|')[1];
 			if (lines[line].includes('laintext before ENCRYPTION (')) {
 				io = 'SENDING';
@@ -204,15 +227,19 @@ function displayContents(contents) {
 				io = 'RECVING';
 				tr_style = " style='background-color:#400000' "
 			}
-			if (lines[line].includes('Padded plaintext')) line++;
+			if (lines[line].includes('Padded plaintext')) {
+				line++;
+				pkt_len = pkt_len - 16;
+			}
 			line++;
-			//console.log('begin packet parse on line '+line+' | next_packet_is_chunk: '+next_packet_is_chunk);
+			//console.log('begin packet parse on line '+line);
 			while (lines[line].length > 3) {
-				hexes = hexes.concat(lines[line].substring(8, 57).replace('   ', ' ').split(' '));
+				hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
 				line++;
 			}
-			//console.log('line: '+line);
-			for (let hx = 0; hx < hexes.length; hx++) {
+			if (pkt_len < 0) pkt_len = hexes.length;
+			//console.log('len: '+ (2*hexes.length-pkt_len));
+			for (let hx = 0; hx < pkt_len; hx++) {
 				//test = test.concat(parseInt(hexes[hx], 16));
 				switch (hexes[hx]) {
 					case '0A':
@@ -221,12 +248,13 @@ function displayContents(contents) {
 					case '0D':
 						charac = '<br>';
 						if (!sliced && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
-							hexes_body = hexes.slice(hx + 4);
+							hexes_body = hexes.slice(hx + 4, pkt_len);
+							//console.log(hexes_body.toString());
 							sliced = true;
 						}
 						break; //0D - CR \r
 					case '3C':
-						if (hexes[hx + 1] !== '2F') charac = '<br>&lt;'; else charac = '&lt;';
+						if (hexes[hx + 1] !== '2F') charac = '<br>&lt;'; else charac = '&lt;'; // 2F - /
 						break; //3C - <
 					case '3E':
 						charac = '&gt;';
@@ -235,21 +263,25 @@ function displayContents(contents) {
 						charac = String.fromCharCode(parseInt(hexes[hx], 16));
 				}
 				pkt = pkt + charac;
-
+				charac = '';
 			}
 
-			if (next_packet_is_chunk) {
-				for (let i = 0; i < hexes.length; i++) {
+			//console.log(pkt);
+
+			if (next_packet_is_chunk) {//console.log("time: " + time + " | pkt_len: " + pkt_len);
+				for (let i = 0; i < pkt_len; i++) {
+					//console.log("time: " + time + " | if (next_packet_is_chunk) hexes: " + hexes.toString());
 					if (hexes[i] !== '')
 						dec_body = dec_body.concat(parseInt(hexes[i], 16));
 				}
-				//console.log('line: ' + line + ' | next_packet_is_chunk: ' + next_packet_is_chunk + ' | dec_body: ' + dec_body);
+				//console.log('time: ' + time + ' | next_packet_is_chunk: ' + next_packet_is_chunk + ' | dec_body: ' + dec_body);
 			} else
 				for (let i = 0; i < hexes_body.length; i++) {
 					if (hexes_body[i] !== '')
 						dec_body = dec_body.concat(parseInt(hexes_body[i], 16));
 				}
-			if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST')) {
+
+			if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST') || pkt.startsWith('PUT')) {
 				header = pkt.split('<br><br>')[0];
 				if (header.includes('Content-Encoding: gzip')) body = '';
 				else body = pkt.split('<br><br>')[1];
@@ -260,8 +292,9 @@ function displayContents(contents) {
 				else body = pkt;
 			}
 
-			//pkt = pkt.replace('<br><br>', '<br><hr><br>');
+			//pkt = pkt.replaceAll('<br><br>', '<br><hr><br>');
 			if (header.includes('Host: ')) host = header.split('Host: ')[1].split('<br>')[0];
+			if (header.includes('Content-Length: 0')) body = '';
 			if (header.includes('Content-Encoding: gzip') || next_packet_is_chunk) {
 				//body='';
 				if (header.includes('Transfer-Encoding: chunked') || next_packet_is_chunk) {
@@ -340,7 +373,9 @@ function displayContents(contents) {
 								}*/
 								//console.log('line: ' + line + ' | chk_hd: ' + head);
 								//head = [];
+								//console.log("362 next_packet_is_chunk: "+ next_packet_is_chunk);
 								next_packet_is_chunk = String.fromCharCode(chunks[chnk][0]) !== '0';
+								//console.log('363 next_packet_is_chunk: ' + next_packet_is_chunk);
 							} else {
 								//console.log('else chnk: '+chnk);
 								//console.log('4 gzip_chunks: ' + gzip_chunks);
@@ -356,9 +391,10 @@ function displayContents(contents) {
 						if (next_packet_is_chunk) body = body + '<br>GZIP Chunks decoded in the next packet'
 					}
 					if (!next_packet_is_chunk) {
-						//console.log('line: ' + line + ' | gzip to decode: ' + gzip_chunks);
+						//console.log('time: ' + time + ' | gzip to decode: ' + gzip_chunks);
 						try {
-							body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(gzip_chunks)));
+							body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(gzip_chunks))).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+							//console.log('time: ' + time + ' | body++: ' + new TextDecoder().decode(pako.inflate(new Uint8Array(gzip_chunks))));
 						} catch (err) {
 							console.error(err);
 						}
@@ -366,14 +402,17 @@ function displayContents(contents) {
 						gzip_chunks = [];
 					}
 				} else {
-					try {
-						body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(dec_body)));
+					try {//console.log('time: ' + time + ' | dec_body:' + dec_body);
+						body = body + new TextDecoder().decode(pako.inflate(new Uint8Array(dec_body))).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+						//console.log('time: ' + time + ' | body++: ' + new TextDecoder().decode(pako.inflate(new Uint8Array(dec_body))));
 					} catch (err) {
 						console.error(err);
 					}
 				}
 			}
+
 			//console.log('line: ' + line + ' | zgip header: ' + header.includes('Content-Encoding: gzip') + ' | nxt_chnk: ' + next_packet_is_chunk + ' | hdr_lg: ' + header.length);
+//console.log(body);
 			if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) || header === '') pkt = header + '<br>' + body;
 			else pkt = header + '<br><hr><br>' + body;
 			out = out + '<tr' + tr_style + '>' +
@@ -385,6 +424,7 @@ function displayContents(contents) {
 					'<td>' + host + '</td>' +
 					'<td>' + pkt + '</td>' +
 					'</tr>\n';
+			if (host.length > 0) console.log('Host: ' + host);
 			time = '';
 			thread = '';
 			thrdID = '';
@@ -398,14 +438,44 @@ function displayContents(contents) {
 			header = '';
 			body = '';
 			dec_body = [];
+			pkt_len = 0;
 		}
 		//next_packet_is_chunk=false;
 	}
 	element.innerHTML = out + "</tbody></table>";
 }
 
-document.getElementById('file-input')
-  .addEventListener('change', readSingleFile, false);
-	</script> 
+	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+
+
+	/** Function that count occurrences of a substring in a string;
+	 * @param {String} string               The string
+	 * @param {String} subString            The sub string to search for
+	 * @param {Boolean} [allowOverlapping]  Optional. (Default:false)
+	 *
+	 * @author Vitim.us https://gist.github.com/victornpb/7736865
+	 * @see Unit Test https://jsfiddle.net/Victornpb/5axuh96u/
+	 * @see http://stackoverflow.com/questions/4009756/how-to-count-string-occurrence-in-string/7924240#7924240
+	 */
+	function occurrences(string, subString, allowOverlapping) {
+
+		string += "";
+		subString += "";
+		if (subString.length <= 0) return (string.length + 1);
+
+		var n = 0,
+				pos = 0,
+				step = allowOverlapping ? 1 : subString.length;
+
+		while (true) {
+			pos = string.indexOf(subString, pos);
+			if (pos >= 0) {
+				++n;
+				pos += step;
+			} else break;
+		}
+		return n;
+	}
+</script>
 </body> 
 </html> 
