@@ -169,7 +169,7 @@
 		let hexes_body = [];
 		let chunks = [];
 		let next_packet_is_chunk = false;
-		let gzip_chunks = [];
+		let data_chunks = [];
 		let pkt_len = -1;
 		let thread_input = "";
 		let thread_filter = false;
@@ -297,12 +297,12 @@
 					}
 					//Process the chunks
 					if (next_packet_is_chunk) {
-						console.log("Skip chunks process, proceeding to the next packet");
+						//console.log("Skip chunks process, proceeding to the next packet");
 						body = 'Chunks decoded in the next packet';
 					} else {
 						for (let i = 0; i < chunks.length; i++) {
 							if (chunks[i] !== "" && chunk_header(chunks[i]) && chunks[i + 1] !== "30" && chunks[i + 2] !== "" && chunks[i + 1] !== undefined && chunks[i + 1].length === chunk_header_length(chunks[i])) {
-								gzip_chunks = gzip_chunks.concat(chunks[i + 1]);
+								data_chunks = data_chunks.concat(chunks[i + 1]);
 								i++;
 							}
 						}
@@ -313,7 +313,7 @@
 					if (next_packet_is_chunk) {
 						hexes = hexes_body;
 					} else {
-						hexes = gzip_chunks;
+						hexes = data_chunks;
 					}
 					if (!next_packet_is_chunk) {
 						for (let hx = 0; hx < hexes.length; hx++) {
@@ -326,6 +326,7 @@
 								console.error(err);
 								console.error("line:", line, "Thread: ", thread, " | hexes: ", hexes);
 								console.error("line:", line, "Thread: ", thread, " | to inflate: ", to_inflate);
+								console.error("in ASCII: ",to_inflate.map(hex => String.fromCharCode(hex)).join(""));
 							}
 							try {
 								body = "Decoded GZIP: <BR>" + new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
@@ -333,14 +334,14 @@
 								console.error('time: ', time, ' | to decode: ', inflated);
 								console.error(err);
 							}
-							gzip_chunks = [];
-							hexes_body = [];
-							to_inflate = []
-							hexes = [];
 							content_gzip = false;
 						} else {
 							body = "Combined Chunks: <BR>" + to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
 						}
+						data_chunks = [];
+						hexes_body = [];
+						to_inflate = [];
+						hexes = [];
 					}
 				}
 				//}
@@ -361,7 +362,8 @@
 						'<td>' + host + '</td>' +
 						'<td>' + pkt + '</td>' +
 						'</tr>\n';
-				if (host.length > 0) console.log('Host: ' + host);
+				//if (pkt.startsWith("HTTP") || pkt.includes("500 Internal Server Error") || pkt.startsWith("GET") || pkt.startsWith("POST")) console.log("Thread: ",thrdID," | ",pkt.split("<br>")[0]);
+				//if (host.length > 0) console.log('Host: ' + host);
 				time = '';
 				thread = '';
 				thrdID = '';
