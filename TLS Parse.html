@@ -165,7 +165,6 @@
 		let tr_style = '';
 		let header = '';
 		let body = '';
-		let sliced = false;
 		let hexes_body = [];
 		let chunks = [];
 		let next_packet_is_chunk = false;
@@ -191,10 +190,10 @@
 							)) &&
 					!lines[line - 1].includes('handshake,')
 			) {
-				time = lines[line].split('|')[4];
+				time   = lines[line].split('|')[4];
 				thread = lines[line].split('|')[3];
 				thrdID = lines[line].split('|')[2] //.replaceAll(' ', '');
-				level = lines[line].split('|')[1];
+				level  = lines[line].split('|')[1];
 				if (lines[line].includes('laintext before ENCRYPTION (')) {
 					io = 'SENDING';
 					io2 = "|WRITE: TLS12 application_data, length = ";
@@ -222,22 +221,22 @@
 					//pkt_len = pkt_len - 16;
 				}
 				line++;
+				//get hexes from file into an array
 				while (lines[line].length > 3) {
 					hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
 					line++;
 				}
+
 				if (pkt_len < 0) pkt_len = hexes.length;
 				for (let hx = 0; hx < pkt_len; hx++) {
-					//test = test.concat(parseInt(hexes[hx], 16));
 					switch (hexes[hx]) {
 						case '0A':
 							charac = '';
 							break; // 0A - LF \n
 						case '0D':
 							charac = '<br>';
-							if (!sliced && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
+							if (hexes_body.length===0 && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
 								hexes_body = hexes.slice(hx + 4, pkt_len);
-								sliced = true;
 							}
 							break; //0D - CR \r
 						case '3C':
@@ -249,7 +248,7 @@
 						default  :
 							charac = String.fromCharCode(parseInt(hexes[hx], 16));
 					}
-					pkt = pkt + charac;
+					pkt += charac;
 					charac = '';
 				}
 
@@ -303,28 +302,24 @@
 						for (let i = 0; i < chunks.length; i++) {
 							if (chunks[i] !== "" && chunk_header(chunks[i]) && chunks[i + 1] !== "30" && chunks[i + 2] !== "" && chunks[i + 1] !== undefined && chunks[i + 1].length === chunk_header_length(chunks[i])) {
 								data_chunks = data_chunks.concat(chunks[i + 1]);
+								//console.log("line: ",line," | i: ",i," | chunks[i + 1]: ",chunks[i + 1]);
 								i++;
 							}
 						}
 						chunks = [];
 					}
 					hexes_body = [];
-					//}
-					if (next_packet_is_chunk) {
-						hexes = hexes_body;
-					} else {
-						hexes = data_chunks;
-					}
+
 					if (!next_packet_is_chunk) {
-						for (let hx = 0; hx < hexes.length; hx++) {
-							to_inflate.push(parseInt(hexes[hx], 16));
+						for (let hx = 0; hx < data_chunks.length; hx++) {
+							to_inflate.push(parseInt(data_chunks[hx], 16));
 						}
 						if (content_gzip) {
 							try {
 								inflated = pako.inflate(new Uint8Array(to_inflate));
 							} catch (err) {
 								console.error(err);
-								console.error("line:", line, "Thread: ", thread, " | hexes: ", hexes);
+								console.error("line:", line, "Thread: ", thread, " | data_chunks: ", data_chunks);
 								console.error("line:", line, "Thread: ", thread, " | to inflate: ", to_inflate);
 								console.error("in ASCII: ",to_inflate.map(hex => String.fromCharCode(hex)).join(""));
 							}
@@ -336,12 +331,12 @@
 							}
 							content_gzip = false;
 						} else {
-							body = "Combined Chunks: <BR>" + to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+							body = "Combined Chunks: <BR>" + to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
 						}
 						data_chunks = [];
-						hexes_body = [];
+						//hexes_body = [];
 						to_inflate = [];
-						hexes = [];
+						//hexes = [];
 					}
 				}
 				//}
@@ -372,7 +367,6 @@
 				host = '';
 				pkt = '';
 				hexes = [];
-				sliced = false;
 				if (!next_packet_is_chunk) chunks = [];
 				header = '';
 				body = '';
