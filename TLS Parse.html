@@ -181,7 +181,8 @@
 		let to_inflate = [];
 		let padded_packet = 0;
 		let io2;
-		for (let line = 1; line < lines.length; line++) {//console.log("r: " + line);
+		let content_gzip=false;
+		for (let line = 1; line < lines.length; line++) {
 			if (
 					(thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
 					(lines[line].includes('laintext before ENCRYPTION (') ||
@@ -189,8 +190,7 @@
 									//&& lines[line - 1].includes('application_data')
 							)) &&
 					!lines[line - 1].includes('handshake,')
-			) {//console.log(line);
-				//console.log(time + ' | Aline: ' + line + ' | pkt_len: ' + pkt_len);
+			) {
 				time = lines[line].split('|')[4];
 				thread = lines[line].split('|')[3];
 				thrdID = lines[line].split('|')[2] //.replaceAll(' ', '');
@@ -216,24 +216,18 @@
 					pkt_len = 0;
 					pkt = "TLS12 alert(close_notify)";
 				}
-				//console.log(time + ' | Bline: ' + line + ' | pkt_len: ' + pkt_len);
 				if (lines[line].includes('Padded plaintext')) {
 					line++;
 					padded_packet = 16;
 					//pkt_len = pkt_len - 16;
 				}
 				line++;
-				//console.log('begin packet parse on line '+line);
 				while (lines[line].length > 3) {
 					hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
 					line++;
 				}
-				//console.log('pkt_len: ' + pkt_len + ' | hexes.length: ' + hexes.length);
 				if (pkt_len < 0) pkt_len = hexes.length;
-				//console.log(time + " | pkt_len: " + pkt_len);
-				//console.log(line," hexes: ", hexes);
 				for (let hx = 0; hx < pkt_len; hx++) {
-					//console.log('hx: ' + hx);
 					//test = test.concat(parseInt(hexes[hx], 16));
 					switch (hexes[hx]) {
 						case '0A':
@@ -243,7 +237,6 @@
 							charac = '<br>';
 							if (!sliced && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
 								hexes_body = hexes.slice(hx + 4, pkt_len);
-								//console.log(hexes_body.toString());
 								sliced = true;
 							}
 							break; //0D - CR \r
@@ -257,20 +250,12 @@
 							charac = String.fromCharCode(parseInt(hexes[hx], 16));
 					}
 					pkt = pkt + charac;
-					//console.log(pkt_len + " - " + hx + " - " + charac);
 					charac = '';
 				}
 
-				//console.log(pkt);
-
 //////////////////////////////////////////////// hexes to decimal body ////////////////////////////////////////////////////////////////////
 
-				//console.log("hexes: " + hexes);
-				//console.log("hexes_body: " + hexes_body);
 				if (next_packet_is_chunk) hexes_body = hexes;
-				//if (Number.isNaN(parseInt(hexes_body[i], 16))) console.log("XX: "+hexes_body[i]);
-				//hexes_body = hexes_body.concat(parseInt(hexes_body[i], 16));
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -278,110 +263,95 @@
 					header = pkt.split('<br><br>')[0];
 					if (header.includes('Content-Encoding: gzip') || header.startsWith('GET')) body = '';
 					else body = pkt.split('<br><br>')[1];
-					//console.log(line," pkt1: ", pkt);
 				} else {
 					header = '';
 					if (next_packet_is_chunk) body = '';
 					else body = pkt;
-					//console.log(line," body2: ", body);
 				}
 
-
-				//console.log("header: " + header.replaceAll("<br>","  "));
-				//console.log("header length: " + header.replaceAll("<br>", "  ").length);
-
-
-				//pkt = pkt.replaceAll('<br><br>', '<br><hr><br>');
-				//console.log("line: ",line);
 				if (header.includes('Server: ')) host = header.split('Server: ')[1].split('<br>')[0];
 				if (header.includes('Host: ')) host = header.split('Host: ')[1].split('<br>')[0];
 				if (header.includes('Content-Length: 0')) body = '';
 				else if (header.includes('Content-Length: ')) body = body.slice(0, parseInt(header.split('Content-Length: ')[1].split('<br>')[0], 10));
 
 
-				//************ \/\/ GZIP \/\/ ************
-				if (header.includes('Content-Encoding: gzip') || next_packet_is_chunk) {
-					if (header.includes('Transfer-Encoding: chunked') || next_packet_is_chunk) {
-						let new_lines = [];
-
-						//find new lines by 0D 0A
-						for (let i = 0; i < hexes_body.length; i++) {
-							if (hexes_body[i] === "0D" && hexes_body[i + 1] === "0A")
-								new_lines = new_lines.concat(i);
-						}
-
-						//check if this is has the final chunk 0
-						next_packet_is_chunk = !hexes_body.join('').includes("300D0A0D0A");
-						//console.log("30 0D 0A 0D 0A > " + hexes_body.join('').includes("300D0A0D0A"));
-
-						//slicing body to chunks
-						//console.log("hexes_body: " + hexes_body);
-						chunks.push(hexes_body.slice(0, new_lines[0]));
-						//console.log("chunks[" + (chunks.length-1) + "]: " + chunks[chunks.length-1] + " | new_lines[0]: " + new_lines[0]);
-						for (let i = 1; i <= new_lines.length; i++) {
-							//console.log('4 new_lines['+i+']: ' + new_lines[i]);
-							if (!(padded_packet === 16 && new_lines[i] === undefined)) {
-								chunks.push(hexes_body.slice(new_lines[i - 1], new_lines[i]).slice(2));
-								//console.log("chunks[" + (chunks.length - 1) + "]: " + chunks[chunks.length - 1] + " | new_lines[" + i + "]: " + new_lines[i]);
-							}
-						}
-
-						//Process the chunks
-						if (next_packet_is_chunk) {
-							console.log("Skip chunks process, proceeding to the next packet");
-							body = body + '<br>GZIP Chunks decoded in the next packet';
-						} else {
-							for (let i = 0; i < chunks.length; i++) {
-								if (chunks[i] !== "" && chunk_header(chunks[i]) && chunks[i + 1] !== "30" && chunks[i + 2] !== "" && chunks[i + 1] !== undefined && chunks[i + 1].length === chunk_header_length(chunks[i])) {
-									//console.log("push(chunks[", i, "+1]): ", (chunks[i + 1]));
-									gzip_chunks = gzip_chunks.concat(chunks[i + 1]);
-									i++;
-								}
-							}
-							chunks = [];
-						}
-						hexes_body = [];
+				//************ \/\/ Chunks \/\/ ************
+				if (header.includes('Content-Encoding: gzip') && !next_packet_is_chunk) {
+					content_gzip = true;
+				}
+				if (header.includes('Transfer-Encoding: chunked') || next_packet_is_chunk) {
+					let new_lines = [];
+					//find new lines by 0D 0A
+					for (let i = 0; i < hexes_body.length; i++) {
+						if (hexes_body[i] === "0D" && hexes_body[i + 1] === "0A")
+							new_lines = new_lines.concat(i);
 					}
-
+					//check if this is has the final chunk 0
+					next_packet_is_chunk = !(hexes_body.join('').includes("300D0A0D0A") || (lines[line + 2].includes("WRITE: TLS12 alert(close_notify)") && lines[line + 2].includes("|" + thrdID + "|")));
+					//slicing body to chunks
+					chunks.push(hexes_body.slice(0, new_lines[0]));
+					for (let i = 1; i <= new_lines.length; i++) {
+						if (!(padded_packet === 16 && new_lines[i] === undefined)) {
+							chunks.push(hexes_body.slice(new_lines[i - 1], new_lines[i]).slice(2));
+						}
+					}
+					//Process the chunks
+					if (next_packet_is_chunk) {
+						console.log("Skip chunks process, proceeding to the next packet");
+						body = 'Chunks decoded in the next packet';
+					} else {
+						for (let i = 0; i < chunks.length; i++) {
+							if (chunks[i] !== "" && chunk_header(chunks[i]) && chunks[i + 1] !== "30" && chunks[i + 2] !== "" && chunks[i + 1] !== undefined && chunks[i + 1].length === chunk_header_length(chunks[i])) {
+								gzip_chunks = gzip_chunks.concat(chunks[i + 1]);
+								i++;
+							}
+						}
+						chunks = [];
+					}
+					hexes_body = [];
+					//}
 					if (next_packet_is_chunk) {
 						hexes = hexes_body;
 					} else {
 						hexes = gzip_chunks;
 					}
-
-					if (!next_packet_is_chunk) {//console.log("hexes to inflate: ",hexes);
+					if (!next_packet_is_chunk) {
 						for (let hx = 0; hx < hexes.length; hx++) {
 							to_inflate.push(parseInt(hexes[hx], 16));
 						}
-						try {
-							inflated = pako.inflate(new Uint8Array(to_inflate));
-						} catch (err) {
-							console.error(err);
-							console.error("line:", line, "Thread: ", thread, " | hexes: ", hexes);
-							console.error("line:", line, "Thread: ", thread, " | to inflate: ", to_inflate);
+						if (content_gzip) {
+							try {
+								inflated = pako.inflate(new Uint8Array(to_inflate));
+							} catch (err) {
+								console.error(err);
+								console.error("line:", line, "Thread: ", thread, " | hexes: ", hexes);
+								console.error("line:", line, "Thread: ", thread, " | to inflate: ", to_inflate);
+							}
+							try {
+								body = "Decoded GZIP: <BR>" + new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+							} catch (err) {
+								console.error('time: ', time, ' | to decode: ', inflated);
+								console.error(err);
+							}
+							gzip_chunks = [];
+							hexes_body = [];
+							to_inflate = []
+							hexes = [];
+							content_gzip = false;
+						} else {
+							body = "Combined Chunks: <BR>" + to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
 						}
-						try {
-							body = body + "Decoded GZIP: <BR>" + new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
-						} catch (err) {
-							console.error('time: ', time, ' | to decode: ', inflated);
-							console.error(err);
-						}
-						gzip_chunks = [];
-						hexes_body = [];
-						to_inflate = []
-						hexes = [];
 					}
 				}
-				//************ /\/\ GZIP /\/\ ***********
+				//}
+				//************ /\/\ Chunks /\/\ ***********
 
-
-				//console.log('line: ' + line + ' | zgip header: ' + header.includes('Content-Encoding: gzip') + ' | nxt_chnk: ' + next_packet_is_chunk + ' | hdr_lg: ' + header.length);
-//console.log(body);
-				if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header !== '') pkt = header + '<br>' + body;
-				else if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
+				//if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header !== '') pkt = header + '<br>' + body;
+				/*else*/
+				//if (body.length=0) body="<br><br>"
+				if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
 				else if (header === '') pkt = body;
-				else pkt = header + '<br><hr><br>' + body;
-				//console.log("pkt: " + pkt);
+				else pkt = header + '<br><hr>' + body;
 				out = out + '<tr' + tr_style + '>' +
 						'<td style="width=3000px">' + time + '</td>' +
 						'<td>' + thread + '</td>' +
@@ -450,12 +420,8 @@
 		let str = "";
 		if (chunk_header(chunk)) {
 			for (let i = 0; i < chunk.length; i++) {
-				//console.log("str["+i+"]",String.fromCharCode(parseInt(chunk[i], 16)));
 				str += String.fromCharCode(parseInt(chunk[i], 16));
 			}
-			//console.log("str: ",str);
-
-			//console.log(chunk, " > len: ", parseInt(str, 16));
 			return parseInt(str, 16);
 		} else return null;
 	}
