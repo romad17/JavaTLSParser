@@ -345,7 +345,16 @@
 					}
 				}
 				//************ /\/\ Chunks /\/\ ***********
-
+				if (header.includes("Content-Type: application/json") && !next_packet_is_chunk && body.length>0) {
+					//console.log("before: ",body);
+					body = JSON.stringify(JSON.parse(body),null,"\t").
+						replaceAll("\n","<br>\n").
+						replaceAll("\t\"","&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
+						replaceAll("\":","</b>\":").
+						replaceAll("\t","&nbsp;&nbsp;&nbsp;&nbsp;");
+					//console.log("after: ",body);
+				}
+				header = header.replaceAll("<br>","<br>\n<b>").replaceAll(":","</b>:");
 				if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
 				else if (header === '') pkt = body;
 				else pkt = header + '<br><hr>' + body;
@@ -358,7 +367,7 @@
 						'<td>' + host + '</td>' +
 						'<td>' + pkt + '</td>' +
 						'</tr>\n';
-				//if (host.length > 0) console.log('Host: ' + host);
+				if (host.length > 0 && io === "SENDING") console.log('Host: ' + host);
 				time = '';
 				thread = '';
 				thrdID = '';
