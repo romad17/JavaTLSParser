@@ -145,8 +145,8 @@
 						<tr>\
 							<th style="width:200px">Time      <br><button onclick="sortTable(0)">Sort</button><br><input type="text" id="myInput0" onkeyup="myFunction(0)" placeholder="Filter" style="width:180px"></th>\
 							<th style="width:200px">Thread    <br><button onclick="sortTable(1)">Sort</button><br><input type="text" id="myInput1" onkeyup="myFunction(1)" placeholder="Filter" style="width:180px"></th>\
-							<th style="width:50px" >Thrd_ID   <br><button onclick="sortTable(2)">Sort</button><br><input type="text" id="myInput2" onkeyup="myFunction(2)" placeholder="Filter" style="width:40px"></th>\
-							<th style="width:50px" >Level     <br><button onclick="sortTable(3)">Sort</button><br><input type="text" id="myInput3" onkeyup="myFunction(3)" placeholder="Filter" style="width:40px"></th>\
+							<!--<th style="width:50px" >Thrd_ID   <br><button onclick="sortTable(2)">Sort</button><br><input type="text" id="myInput2" onkeyup="myFunction(2)" placeholder="Filter" style="width:40px"></th>\
+							<th style="width:50px" >Level     <br><button onclick="sortTable(3)">Sort</button><br><input type="text" id="myInput3" onkeyup="myFunction(3)" placeholder="Filter" style="width:40px"></th> -->\
 							<th style="width:60px" >I/O       <br><button onclick="sortTable(4)">Sort</button><br><input type="text" id="myInput4" onkeyup="myFunction(4)" placeholder="Filter" style="width:50px"></th>\
 							<th style="width:200px">Host      <br><button onclick="sortTable(5)">Sort</button><br><input type="text" id="myInput5" onkeyup="myFunction(5)" placeholder="Filter" style="width:180px"></th>\
 							<th                    >Content   <br><button onclick="sortTable(6)">Sort</button><br><input type="text" id="myInput6" onkeyup="myFunction(6)" placeholder="Filter"></th>\
@@ -158,10 +158,10 @@
 		let time = '';
 		let thread = '';
 		let thrdID = '';
-		let level = '';
+		//let level = '';
 		let io = '';
 		let host = '';
-		let charac = '';
+		//let charac = '';
 		let tr_style = '';
 		let header = '';
 		let body = '';
@@ -182,6 +182,8 @@
 		let io2;
 		let content_gzip=false;
 		let hexes_combined = [];
+		let enc_json = false;
+		let prefix = "";
 		for (let line = 1; line < lines.length; line++) {
 			if (
 					(thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
@@ -193,14 +195,19 @@
 			) {
 				time = lines[line].split('|')[4];
 				thread = lines[line].split('|')[3];
-				thrdID = lines[line].split('|')[2] //.replaceAll(' ', '');
-				level = lines[line].split('|')[1];
+				thrdID = lines[line].split('|')[2];
+				//level = lines[line].split('|')[1];
 				if (lines[line].includes('laintext before ENCRYPTION (')) {
 					io = 'SENDING';
 					io2 = "|WRITE: TLS12 application_data, length = ";
 					next_packet_is_chunk = false;
+					data_chunks = [];
+					to_inflate = [];
+					inflated = [];
+					hexes_combined = [];
+					enc_json = false;
 					tr_style = " style='background-color:#000040' ";
-				}
+				} else
 				if (lines[line].includes('laintext after DECRYPTION (')) {
 					io = 'RECVING';
 					io2 = "|READ: TLSv1.2 application_data, length = ";
@@ -232,27 +239,25 @@
 				for (let hx = 0; hx < pkt_len; hx++) {
 					switch (hexes[hx]) {
 						case '0A':
-							charac = '';
+							//pkt += '';
 							break; // 0A - LF \n
 						case '0D':
-							charac = '<br>';
+							pkt += '<br>';
 							if (hexes_body.length === 0 && hexes[hx + 1] === '0A' && hexes[hx + 2] === '0D' && hexes[hx + 3] === '0A') {
 								hexes_body = hexes.slice(hx + 4, pkt_len);
 							}
 							break; //0D - CR \r
 						case '3C':
-							if (hexes[hx + 1] !== '2F') charac = '<br>&lt;'; else charac = '&lt;'; // 2F - /
+							if (hexes[hx + 1] !== '2F') pkt += '<br>&lt;'; else pkt += '&lt;'; // 2F - /
 							break; //3C - <
 						case '3E':
-							charac = '&gt;';
+							pkt += '&gt;';
 							break; //3E - >
-							//case '  ':
-							//	break;
 						default  :
-							charac = String.fromCharCode(parseInt(hexes[hx], 16));
+							pkt += String.fromCharCode(parseInt(hexes[hx], 16));
 					}
-					pkt += charac;
-					charac = '';
+					//pkt += charac;
+					//charac = '';
 				}
 
 //////////////////////////////////////////////// hexes to decimal body ////////////////////////////////////////////////////////////////////
@@ -263,19 +268,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 				if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST') || pkt.startsWith('PUT')) {
-					header = pkt.split('<br><br>')[0];
+					header = pkt.split('<br><br>',1)[0];
 					if (header.includes('Content-Encoding: gzip') || header.startsWith('GET')) body = '';
-					else body = pkt.split('<br><br>')[1];
+					else body = pkt.split('<br><br>',2)[1];
 				} else {
 					header = '';
 					if (next_packet_is_chunk) body = '';
 					else body = pkt;
 				}
 
-				if (header.includes('Server: ')) host = header.split('Server: ')[1].split('<br>')[0];
-				if (header.includes('Host: ')) host = header.split('Host: ')[1].split('<br>')[0];
+				if (header.includes('Server: ')) host = header.split('Server: ',2)[1].split('<br>',1)[0];
+				if (header.includes('Host: ')) host = header.split('Host: ',2)[1].split('<br>',1)[0];
 				if (header.includes('Content-Length: 0')) body = '';
-				else if (header.includes('Content-Length: ')) body = body.slice(0, parseInt(header.split('Content-Length: ')[1].split('<br>')[0], 10));
+				else if (header.includes('Content-Length: ')) body = body.slice(0, parseInt(header.split('Content-Length: ',2)[1].split('<br>',1)[0], 10));
 
 
 				//************ \/\/ Chunks \/\/ ************
@@ -289,30 +294,36 @@
 						//console.log(line,"lastIndexOf: ",hexes_body.join('').lastIndexOf("0D0A")/2+2);
 						//console.log(line,hexes_body);
 						//console.log(line,"sliced per padding: ", hexes_body.slice(0, hexes_body.join('').lastIndexOf("0D0A")/2+2));
-						hexes_combined = hexes_combined.concat(hexes_body.slice(0, hexes_body.join('').lastIndexOf("0D0A")/2+2));
+						hexes_combined = hexes_combined.concat(hexes_body.slice(0, hexes_body.join('').lastIndexOf("0D0A") / 2 + 2));
 					} else {
 						hexes_combined = hexes_combined.concat(hexes_body);
 					}
 
 					//check if this is has the final chunk 0
-					next_packet_is_chunk = !(hexes_body.join('').includes("300D0A0D0A") || (lines[line + 2].includes("WRITE: TLS12 alert(close_notify)") && lines[line + 2].includes("|" + thrdID + "|")));
+					next_packet_is_chunk = !(
+							hexes_body.join('').includes("300D0A0D0A") ||
+							(lines[line + 2].includes("|" + thrdID + "|") && (lines[line + 2].includes("|close outbound of SSLSocket") || lines[line + 2].includes("|WRITE: TLS12 alert(close_notify)"))) ||
+							(lines[line + 3].includes("|" + thrdID + "|") && (lines[line + 3].includes("|close outbound of SSLSocket") || lines[line + 3].includes("|WRITE: TLS12 alert(close_notify)")))
+					);
+
+					if (header.includes("Content-Type: application/json")) enc_json = true;
 
 					//Process the chunks
 					if (next_packet_is_chunk) {
 						body = 'Chunks decoded in the next packet';
 					} else {
 						//console.log(line," hexes_combined: ",hexes_combined);
-						let q=0;
+						let q = 0;
 						for (let i = 0; i < hexes_combined.length; i++) {
 							if (hexes_combined[i] === "30" && hexes_combined[i + 1] === "0D" && hexes_combined[i + 2] === "0A" && hexes_combined[i + 3] === "0D" && hexes_combined[i + 4] === "0A")
 								break;
 							if (hexes_combined[i] === "0D" && hexes_combined[i + 1] === "0A" && chunk_header(hexes_combined.slice(q, i))) {
 								//console.log(line,chunk_header_length(hexes_combined.slice(q, i)));
 								//console.log(line,hexes_combined.slice(i+2,chunk_header_length(hexes_combined.slice(q, i))+i+2));
-								data_chunks=data_chunks.concat(hexes_combined.slice(i+2,chunk_header_length(hexes_combined.slice(q, i))+i+2));
-								q=chunk_header_length(hexes_combined.slice(q, i))+i+4;
-								i=q;
-								}
+								data_chunks = data_chunks.concat(hexes_combined.slice(i + 2, chunk_header_length(hexes_combined.slice(q, i)) + i + 2));
+								q = chunk_header_length(hexes_combined.slice(q, i)) + i + 4;
+								i = q;
+							}
 						}
 
 						for (let hx = 0; hx < data_chunks.length; hx++) {
@@ -321,6 +332,12 @@
 						if (content_gzip) {
 							try {
 								inflated = pako.inflate(new Uint8Array(to_inflate));
+								try {
+									prefix = "Decoded GZIP: <BR>";
+									body = new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+								} catch (err) {
+									console.error(err, "\ntime: ", time, " | to decode: ", inflated);
+								}
 							} catch (err) {
 								console.error(err,
 										"\n       line: ", line,
@@ -329,14 +346,11 @@
 										"\n to inflate: ", to_inflate,
 										"\n   in ASCII: ", to_inflate.map(hex => String.fromCharCode(hex)).join(""));
 							}
-							try {
-								body = "Decoded GZIP: <BR>" + new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
-							} catch (err) {
-								console.error(err, '\ntime: ', time, ' | to decode: ', inflated);
-							}
+
 							content_gzip = false;
 						} else {
-							body = "Combined Chunks: <BR>" + to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+							prefix = "Combined Chunks: <BR>";
+							body = to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll("<", "&lt;").replaceAll(">", "&gt;<br>");
 						}
 						data_chunks = [];
 						to_inflate = [];
@@ -345,29 +359,24 @@
 					}
 				}
 				//************ /\/\ Chunks /\/\ ***********
-				if (header.includes("Content-Type: application/json") && !next_packet_is_chunk && body.length>0) {
+				if ((header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
 					//console.log("before: ",body);
 					try {
-						body = JSON.stringify(JSON.parse(body.replace("Decoded GZIP: <BR>","").replace("Combined Chunks: <BR>","").replaceAll("\u0000","")),null,"\t").
-						replaceAll("\n","<br>\n").
-						replaceAll("\t\"","&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
-						replaceAll("\":","</b>\":").
-						replaceAll("\t","&nbsp;&nbsp;&nbsp;&nbsp;");
+						body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").replaceAll("\n", "<br>\n").replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").replaceAll("\":", "</b>\":").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
 						//console.log("after: ",body);
-					}
-					catch (err) {
-						console.error(line,err,body);
+					} catch (err) {
+						console.error(line, err, body);
 					}
 				}
-				header = header.replaceAll("<br>","<br>\n<b>").replaceAll(":","</b>:");
+				body = prefix + body;
+				header = header.replaceAll("<br>", "<br>\n<b>").replaceAll(":", "</b>:");
 				if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
 				else if (header === '') pkt = body;
 				else pkt = header + '<br><hr>' + body;
 				out = out + '<tr' + tr_style + '>' +
 						'<td style="width=3000px">' + time + '</td>' +
-						'<td>' + thread + '</td>' +
-						'<td>' + thrdID + '</td>' +
-						'<td>' + level + '</td>' +
+						'<td>' + thread + " | " + thrdID + '</td>' +
+						//'<td>' + level + '</td>' +
 						'<td>' + io + '</td>' +
 						'<td>' + host + '</td>' +
 						'<td>' + pkt + '</td>' +
@@ -376,17 +385,21 @@
 				time = '';
 				thread = '';
 				thrdID = '';
-				level = '';
+				//level = '';
 				io = '';
 				host = '';
 				pkt = '';
 				hexes = [];
-				if (!next_packet_is_chunk) chunks = [];
+				if (!next_packet_is_chunk) {
+					chunks = [];
+					enc_json = false;
+				}
 				header = '';
 				body = '';
 				hexes_body = [];
 				pkt_len = -1;
 				padded_packet = 0;
+				prefix = "";
 			}
 		}
 		element.innerHTML = out + "</tbody></table>";
