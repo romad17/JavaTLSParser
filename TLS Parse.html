@@ -347,12 +347,17 @@
 				//************ /\/\ Chunks /\/\ ***********
 				if (header.includes("Content-Type: application/json") && !next_packet_is_chunk && body.length>0) {
 					//console.log("before: ",body);
-					body = JSON.stringify(JSON.parse(body),null,"\t").
+					try {
+						body = JSON.stringify(JSON.parse(body.replace("Decoded GZIP: <BR>","").replace("Combined Chunks: <BR>","").replaceAll("\u0000","")),null,"\t").
 						replaceAll("\n","<br>\n").
 						replaceAll("\t\"","&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
 						replaceAll("\":","</b>\":").
 						replaceAll("\t","&nbsp;&nbsp;&nbsp;&nbsp;");
-					//console.log("after: ",body);
+						//console.log("after: ",body);
+					}
+					catch (err) {
+						console.error(line,err,body);
+					}
 				}
 				header = header.replaceAll("<br>","<br>\n<b>").replaceAll(":","</b>:");
 				if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
