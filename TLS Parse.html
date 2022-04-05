@@ -365,7 +365,7 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
-                if ((header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
+                if (typeof body !== 'undefined' && (header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
                     //console.log("before: ",body);
                     try {
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").replaceAll("\n", "<br>\n").replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").replaceAll("\":", "</b>\":").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
