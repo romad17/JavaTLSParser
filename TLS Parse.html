@@ -281,7 +281,7 @@
                 if (header.includes('Server: ')) host = header.split('Server: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Host: ')) host = header.split('Host: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Content-Length: 0')) body = '';
-                else if (header.includes('Content-Length: ')) body = body.slice(0, parseInt(header.split('Content-Length: ', 2)[1].split('<br>', 1)[0], 10));
+                else if (header.includes('Content-Length: ') && typeof body !== 'undefined') body = body.slice(0, parseInt(header.split('Content-Length: ', 2)[1].split('<br>', 1)[0], 10));
 
 
                 //************ \/\/ Chunks \/\/ ************
