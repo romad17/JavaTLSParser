@@ -134,7 +134,9 @@
         const reader = new FileReader();
         reader.onload = function (e) {
             const contents = e.target.result.split('\n');
+            if (contents.length>1)
             displayContents(contents);
+            else alert("Empty content, could be the file is too large?");
         };
         reader.readAsText(file);
     }
@@ -301,6 +303,7 @@
                     }
 
                     //check if this is has the final chunk 0
+                    if (lines.length<line+2) {console.log("end of file, stopping");break;}
                     next_packet_is_chunk = !(
                         hexes_body.join('').includes("300D0A0D0A") ||
                         (lines[line + 2].includes("|" + thrdID + "|") && (lines[line + 2].includes("|close outbound of SSLSocket") || lines[line + 2].includes("|WRITE: TLS12 alert(close_notify)"))) ||
