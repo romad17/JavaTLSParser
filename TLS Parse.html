@@ -191,10 +191,9 @@
         for (let line = 1; line < lines.length; line++) {
             if (
                 (thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
-                (lines[line].includes('laintext before ENCRYPTION (') ||
-                    (lines[line].includes('laintext after DECRYPTION (')
-                        //&& lines[line - 1].includes('application_data')
-                    )) &&
+                (   lines[line].includes('laintext before ENCRYPTION (') ||
+                    lines[line].includes('laintext after DECRYPTION (') ||
+                    lines[line].includes('|handling exception (')) &&
                 !lines[line - 1].includes('handshake,')
             ) {
                 time = lines[line].split('|')[4];
@@ -215,6 +214,11 @@
                     io = 'RECVING';
                     io2 = "|READ: TLSv1.2 application_data, length = ";
                     tr_style = " style='background-color:#400000' ";
+                } else if (lines[line].includes('|handling exception (')) {
+                    io = 'EXCPT';
+                    tr_style = " style='background-color:#FF0000' ";
+                    //console.info("HH");
+                    io2 = '';
                 }
                 if (lines[line - 1].includes(io2) && lines[line - 1].includes(thread) && lines[line - 1].includes("|" + thrdID + "|")) {
                     pkt_len = lines[line - 1].split(io2)[1];
@@ -225,6 +229,10 @@
                 } else if (lines[line - 1].includes("WRITE: TLS12 alert(close_notify)")) {
                     pkt_len = 0;
                     pkt = "TLS12 alert(close_notify)";
+                } else if (lines[line].includes("|handling exception (")) {
+                    pkt_len = 0;
+                    pkt = "handling exception";
+                    //console.info("HHH");
                 }
                 if (lines[line].includes('Padded plaintext')) {
                     line++;
