@@ -188,10 +188,11 @@
         let hexes_combined = [];
         let enc_json = false;
         let prefix = "";
+        let temp_body;
         for (let line = 1; line < lines.length; line++) {
             if (
                 (thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
-                (   lines[line].includes('laintext before ENCRYPTION (') ||
+                (lines[line].includes('laintext before ENCRYPTION (') ||
                     lines[line].includes('laintext after DECRYPTION (') ||
                     lines[line].includes('|handling exception (')) &&
                 !lines[line - 1].includes('handshake,')
@@ -220,6 +221,7 @@
                     //console.info("HH");
                     io2 = '';
                 }
+                enc_json = false; //new trial
                 if (lines[line - 1].includes(io2) && lines[line - 1].includes(thread) && lines[line - 1].includes("|" + thrdID + "|")) {
                     pkt_len = lines[line - 1].split(io2)[1];
                 } else if (lines[line - 2].includes(io2) && lines[line - 2].includes(thread) && lines[line - 2].includes("|" + thrdID + "|")) {
@@ -241,9 +243,15 @@
                 }
                 line++;
                 //get hexes from file into an array
-                while (lines[line].length > 3) {
-                    hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
-                    line++;
+                try {
+                    while (lines[line].length > 3) {
+                        hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
+                        line++;
+                    }
+                }
+                catch (err) {
+                    console.error(err,
+                        "\n       line: ", line);
                 }
 
                 if (pkt_len < 0) pkt_len = hexes.length;
@@ -310,8 +318,11 @@
                         hexes_combined = hexes_combined.concat(hexes_body);
                     }
 
-                    //check if this is has the final chunk 0
-                    if (lines.length<line+2) {console.log("end of file, stopping");break;}
+                    //check if this has the final chunk 0
+                    if (lines.length < line + 2) {
+                        console.log("end of file, stopping");
+                        break;
+                    }
                     next_packet_is_chunk = !(
                         hexes_body.join('').includes("300D0A0D0A") ||
                         (lines[line + 2].includes("|" + thrdID + "|") && (lines[line + 2].includes("|close outbound of SSLSocket") || lines[line + 2].includes("|WRITE: TLS12 alert(close_notify)"))) ||
@@ -377,12 +388,24 @@
                 }
                 //************ /\/\ Chunks /\/\ ***********
                 if (typeof body !== 'undefined' && (header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
-                    //console.log("before: ",body);
+                    //console.log("enc_json: ",enc_json);
+                    //console.log("next_packet_is_chunk: ",next_packet_is_chunk);
+                    //console.log("h inc json: ",header.includes("Content-Type: application/json"));
                     try {
-                        body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").replaceAll("\n", "<br>\n").replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").replaceAll("\":", "</b>\":").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+                        temp_body = body;
+                        body = "";
+                        body = JSON.stringify(JSON.parse(temp_body.
+                            replaceAll(/[\u0000-\u001F\u007F-\u009F]/g, "").
+                            replaceAll("\u0000", "")), null, "\t").
+                            replaceAll("\n", "<br>\n").
+                            replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
+                            replaceAll("\":", "</b>\":").
+                            replaceAll("\u0018", "").
+                            replaceAll(String.fromCharCode(17), "").
+                            replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
                         //console.log("after: ",body);
                     } catch (err) {
-                        console.error("Line: ",line, " | Error: ", err," | Body: ", body);
+                        console.error("Line: ", line, " | Error: ", err, " | Body stringify: ", body, " | Body: ", temp_body);
                     }
                 }
                 body = prefix + body;
