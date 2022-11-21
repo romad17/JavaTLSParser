@@ -382,7 +382,7 @@
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").replaceAll("\n", "<br>\n").replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").replaceAll("\":", "</b>\":").replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
                         //console.log("after: ",body);
                     } catch (err) {
-                        console.error(line, err, body);
+                        console.error("Line: ",line, " | Error: ", err," | Body: ", body);
                     }
                 }
                 body = prefix + body;
