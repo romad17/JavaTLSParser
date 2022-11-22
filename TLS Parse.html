@@ -162,10 +162,8 @@
         let time = '';
         let thread = '';
         let thrdID = '';
-        //let level = '';
         let io = '';
         let host = '';
-        //let charac = '';
         let tr_style = '';
         let header = '';
         let body = '';
@@ -282,7 +280,7 @@
                     //charac = '';
                 }
 
-//////////////////////////////////////////////// hexes to decimal body ////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////// hexes to decimal body ////////////////////////////////////////////////////////////////////
 
                 if (next_packet_is_chunk) hexes_body = hexes;
 
@@ -292,26 +290,27 @@
                 if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST') || pkt.startsWith('PUT')) {
                     header = pkt.split('<br><br>', 1)[0];
                     if (header.includes('Content-Encoding: gzip') || header.startsWith('GET')) body = '';
-                    else body = pkt.split('<br><br>', 2)[1];
+                    else body = pkt.substring(pkt.indexOf('<br><br>')+8); //.split('<br><br>', 2)[1];
                 } else {
                     header = '';
                     if (next_packet_is_chunk) body = '';
                     else body = pkt;
                 }
-
+                //if (body.includes("html")) console.log("body: ",body);
                 if (header.includes('erver: ')) host = header.split('erver: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Host: ')) host = header.split('Host: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Content-Length: 0')) body = '';
-                else if (header.includes('Content-Length: ') && typeof body !== 'undefined') body = body.slice(0, parseInt(header.split('Content-Length: ', 2)[1].split('<br>', 1)[0], 10));
+                //else if (header.includes('Content-Length: ') && typeof body !== 'undefined') body = body.slice(0, parseInt(header.split('Content-Length: ', 2)[1].split('<br>', 1)[0], 10));
 
 
                 //************ \/\/ Chunks \/\/ ************
-                if (header.includes('Content-Encoding: gzip') && !next_packet_is_chunk) {
+                if (header.toLowerCase().includes('content-encoding: gzip') && !next_packet_is_chunk) {
                     content_gzip = true;
                 }
-                if (header.includes('Transfer-Encoding: chunked') || next_packet_is_chunk) {
+                if (header.toLowerCase().includes('transfer-encoding: chunked') || next_packet_is_chunk) {
 
                     hexes_body = hexes_body.filter(e => e);
+
                     if (padded_packet === 16 && hexes_body.join('').includes("0D0A")) {
                         //console.log(line,"lastIndexOf: ",hexes_body.join('').lastIndexOf("0D0A")/2+2);
                         //console.log(line,hexes_body);
@@ -320,7 +319,7 @@
                     } else {
                         hexes_combined = hexes_combined.concat(hexes_body);
                     }
-
+                    //console.log("hexes_combined: ", hexes_combined);
                     //check if this has the final chunk 0
                     if (lines.length < line + 2) {
                         console.log("end of file, stopping");
@@ -360,17 +359,23 @@
                         for (let hx = 0; hx < data_chunks.length; hx++) {
                             to_inflate.push(parseInt(data_chunks[hx], 16));
                         }
+                        //console.log("to_inflate: ",to_inflate);
+
                         if (content_gzip) {
                             try {
                                 inflated = pako.inflate(new Uint8Array(to_inflate));
+                                //console.log("inflated: ",inflated);
                                 try {
                                     prefix = "Decoded GZIP: <BR>";
                                     body = new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
                                 } catch (err) {
-                                    console.error(err, "\ntime: ", time, " | to decode: ", inflated);
+                                    console.error(err,
+                                        "\n      time: ", time,
+                                        "\n to decode: ", inflated);
                                 }
                             } catch (err) {
                                 console.error(err,
+                                    "\n         TS: ", time,
                                     "\n       line: ", line,
                                     "\n     Thread: ", thread,
                                     "\ndata_chunks: ", data_chunks,
@@ -390,6 +395,7 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
+                //if (body.includes("html")) console.log("body 2: ", body);
                 if (typeof body !== 'undefined' && (header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
                     //console.log("enc_json: ",enc_json);
                     //console.log("next_packet_is_chunk: ",next_packet_is_chunk);
@@ -407,6 +413,7 @@
                         console.error("Line: ", line, " \n Error: ", err, " \n Body : ", body);
                     }
                 }
+                //if (body.includes("html")) console.log("body 3: ", body);
                 body = prefix + body;
                 header = header.replaceAll("<br>", "<br>\n<b>").replaceAll(":", "</b>:");
                 if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
@@ -432,6 +439,7 @@
                 if (!next_packet_is_chunk) {
                     chunks = [];
                     enc_json = false;
+                    content_gzip = false;
                 }
                 header = '';
                 body = '';
