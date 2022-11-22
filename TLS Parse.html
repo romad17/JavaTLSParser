@@ -395,10 +395,6 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
-                if (body.includes("ffa21b50-7527-4459-b8fa-62e811ac9db4")) console.log("body 2: ", body);
-                console.log("enc_json: ",enc_json);
-                console.log("!next_packet_is_chunk: ",!next_packet_is_chunk);
-                console.log("h inc json: ",header.toLowerCase().includes("content-type: application/json"));
                 if (typeof body !== 'undefined' && (header.toLowerCase().includes("content-type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
                     //console.log("enc_json: ",enc_json);
                     //console.log("!next_packet_is_chunk: ",!next_packet_is_chunk);
