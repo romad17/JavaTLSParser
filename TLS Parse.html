@@ -188,7 +188,6 @@
         let hexes_combined = [];
         let enc_json = false;
         let prefix = "";
-        let temp_body;
         for (let line = 1; line < lines.length; line++) {
             if (
                 (thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
@@ -244,9 +243,13 @@
                 line++;
                 //get hexes from file into an array
                 try {
-                    while (lines[line].length > 3) {
-                        hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
-                        line++;
+                    while (lines[line] !== ")" && lines[line] !== undefined) {
+                        if (lines[line].startsWith("  ") &&
+                            lines[line].startsWith(": ",6) &&
+                            lines[line].startsWith("   ",31)) {//console.log("a");
+                            hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
+                        }
+                            line++;
                     }
                 }
                 catch (err) {
@@ -296,7 +299,7 @@
                     else body = pkt;
                 }
 
-                if (header.includes('Server: ')) host = header.split('Server: ', 2)[1].split('<br>', 1)[0];
+                if (header.includes('erver: ')) host = header.split('erver: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Host: ')) host = header.split('Host: ', 2)[1].split('<br>', 1)[0];
                 if (header.includes('Content-Length: 0')) body = '';
                 else if (header.includes('Content-Length: ') && typeof body !== 'undefined') body = body.slice(0, parseInt(header.split('Content-Length: ', 2)[1].split('<br>', 1)[0], 10));
@@ -392,11 +395,7 @@
                     //console.log("next_packet_is_chunk: ",next_packet_is_chunk);
                     //console.log("h inc json: ",header.includes("Content-Type: application/json"));
                     try {
-                        temp_body = body;
-                        body = "";
-                        body = JSON.stringify(JSON.parse(temp_body.
-                            replaceAll(/[\u0000-\u001F\u007F-\u009F]/g, "").
-                            replaceAll("\u0000", "")), null, "\t").
+                        body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").
                             replaceAll("\n", "<br>\n").
                             replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
                             replaceAll("\":", "</b>\":").
@@ -405,7 +404,7 @@
                             replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
                         //console.log("after: ",body);
                     } catch (err) {
-                        console.error("Line: ", line, " | Error: ", err, " | Body stringify: ", body, " | Body: ", temp_body);
+                        console.error("Line: ", line, " \n Error: ", err, " \n Body : ", body);
                     }
                 }
                 body = prefix + body;
