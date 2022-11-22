@@ -218,7 +218,7 @@
                     //console.info("HH");
                     io2 = '';
                 }
-                enc_json = false; //new trial
+                //enc_json = false; //new trial
                 if (lines[line - 1].includes(io2) && lines[line - 1].includes(thread) && lines[line - 1].includes("|" + thrdID + "|")) {
                     pkt_len = lines[line - 1].split(io2)[1];
                 } else if (lines[line - 2].includes(io2) && lines[line - 2].includes(thread) && lines[line - 2].includes("|" + thrdID + "|")) {
@@ -395,11 +395,14 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
-                //if (body.includes("html")) console.log("body 2: ", body);
-                if (typeof body !== 'undefined' && (header.includes("Content-Type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
+                if (body.includes("ffa21b50-7527-4459-b8fa-62e811ac9db4")) console.log("body 2: ", body);
+                console.log("enc_json: ",enc_json);
+                console.log("!next_packet_is_chunk: ",!next_packet_is_chunk);
+                console.log("h inc json: ",header.toLowerCase().includes("content-type: application/json"));
+                if (typeof body !== 'undefined' && (header.toLowerCase().includes("content-type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
                     //console.log("enc_json: ",enc_json);
-                    //console.log("next_packet_is_chunk: ",next_packet_is_chunk);
-                    //console.log("h inc json: ",header.includes("Content-Type: application/json"));
+                    //console.log("!next_packet_is_chunk: ",!next_packet_is_chunk);
+                    //console.log("h inc json: ",header.toLowerCase().includes("content-type: application/json"));
                     try {
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "")), null, "\t").
                             replaceAll("\n", "<br>\n").
