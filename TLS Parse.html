@@ -241,13 +241,14 @@
                 line++;
                 //get hexes from file into an array
                 try {
-                    while (lines[line] !== ")" && lines[line] !== undefined) {
+                    while (!lines[line].startsWith(")") && lines[line] !== undefined) {
                         if (lines[line].startsWith("  ") &&
                             lines[line].startsWith(": ",6) &&
                             lines[line].startsWith("   ",31)) {//console.log("a");
                             hexes = hexes.concat(lines[line].substring(8, 57).replaceAll('   ', ' ').split(' '));
                         }
                             line++;
+                        //console.log(line, lines[line]);
                     }
                 }
                 catch (err) {
@@ -279,7 +280,7 @@
                     //pkt += charac;
                     //charac = '';
                 }
-
+                //console.log(line," hexes: ",hexes);
                 //////////////////////////////////////////////// hexes to decimal body ////////////////////////////////////////////////////////////////////
 
                 if (next_packet_is_chunk) hexes_body = hexes;
@@ -407,7 +408,7 @@
                             replaceAll("\u0018", "").
                             replaceAll(String.fromCharCode(17), "").
                             replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
-                        //console.log("after: ",body);
+                        console.log("after: ",body);
                     } catch (err) {
                         console.error("Line: ", line, " \n Error: ", err, " \n Body : ", body);
                     }
