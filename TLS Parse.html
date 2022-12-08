@@ -401,7 +401,7 @@
                     //console.log("!next_packet_is_chunk: ",!next_packet_is_chunk);
                     //console.log("h inc json: ",header.toLowerCase().includes("content-type: application/json"));
                     try {
-                        console.log("before: ",body);
+                        //console.log("before: ",body);
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "").replaceAll("\u0017", "")), null, "\t").
                             replaceAll("\n", "<br>\n").
                             replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
@@ -409,7 +409,7 @@
                             replaceAll("\u0018", "").
                             replaceAll(String.fromCharCode(17), "").
                             replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
-                        console.log("after: ",body);
+                        //console.log("after: ",body);
                     } catch (err) {
                         console.error("Line: ", line, " \n Error: ", err, " \n Body : ", body);
                     }
