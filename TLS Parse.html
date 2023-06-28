@@ -189,9 +189,12 @@
         for (let line = 1; line < lines.length; line++) {
             if (
                 (thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
-                (lines[line].includes('laintext before ENCRYPTION (') ||
+                (
+                    lines[line].includes('laintext before ENCRYPTION (') ||
                     lines[line].includes('laintext after DECRYPTION (') ||
-                    lines[line].includes('|handling exception (')) &&
+                    lines[line].includes('|handling exception (') ||
+                    lines[line].includes('Received alert message')
+                ) &&
                 !lines[line - 1].includes('handshake,')
             ) {
                 time = lines[line].split('|')[4];
@@ -233,6 +236,17 @@
                         pkt_len = 0;
                         pkt = "handling exception";
                         //console.info("HHH");
+                    } else if (line>1 && lines[line].includes("Received alert message")) {
+                        console.log("aaa");
+                        pkt_len = 0;
+                        pkt="";
+                        line=line+1;
+                        while (lines[line]!=="}") {
+                            pkt=pkt+lines[line]+"<br>";
+                            line=line+1;
+                        }
+                        pkt=pkt+"}";
+                        console.log("alert: ",pkt);
                     }
                 }
                 catch (e) {console.error("line: ",line,"\n",e)}
