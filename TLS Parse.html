@@ -11,6 +11,7 @@
         td {
             border: 1px solid white;
             word-wrap: break-word;
+            white-space: pre;
         }
 
         table {
@@ -385,8 +386,8 @@
                                 inflated = pako.inflate(new Uint8Array(to_inflate));
                                 //console.log("inflated: ",inflated);
                                 try {
-                                    prefix = "Decoded GZIP: <BR>";
-                                    body = new TextDecoder().decode(inflated).replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+                                    prefix = "Decoded GZIP:\n";
+                                    body = new TextDecoder().decode(inflated).replaceAll('>', '>\n'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
                                 } catch (err) {
                                     console.error(err,
                                         "\n      time: ", time,
@@ -421,12 +422,12 @@
                     try {
                         //console.log("before: ",body);
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "").replaceAll("\u0017", "")), null, "\t").
-                            replaceAll("\n", "<br>\n").
-                            replaceAll("\t\"", "&nbsp;&nbsp;&nbsp;&nbsp;\"<b>").
+                            //replaceAll("\n", "<br>\n").
+                            replaceAll("\t\"", "    <b>").
                             replaceAll("\":", "</b>\":").
                             replaceAll("\u0018", "").
-                            replaceAll(String.fromCharCode(17), "").
-                            replaceAll("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+                            replaceAll(String.fromCharCode(17), ""); //.
+                            //replaceAll("\t", "  ");
                         //console.log("after: ",body);
                     } catch (err) {
                         console.error("Line: ", line, " \n Error: ", err, " \n Body : ", body);
@@ -434,7 +435,7 @@
                 }
                 //if (body.includes("html")) console.log("body 3: ", body);
                 body = prefix + body;
-                header = header.replaceAll("<br>", "<br>\n<b>").replaceAll(":", "</b>:");
+                header = header.replaceAll("<br>", "\n<b>").replaceAll(":", "</b>:");
                 if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
                 else if (header === '') pkt = body;
                 else pkt = header + '<br><hr>' + body;
