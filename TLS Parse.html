@@ -405,7 +405,7 @@
 
                             content_gzip = false;
                         } else {
-                            prefix = "Combined Chunks: <BR>";
+                            prefix = "Combined Chunks: \n";
                             body = to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll("<", "&lt;").replaceAll(">", "&gt;<br>");
                         }
                         data_chunks = [];
