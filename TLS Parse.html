@@ -423,7 +423,7 @@
                         //console.log("before: ",body);
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "").replaceAll("\u0017", "")), null, "\t").
                             //replaceAll("\n", "<br>\n").
-                            replaceAll("\t\"", "    <b>").
+                            replaceAll("\t\"", "    \"<b>").
                             replaceAll("\":", "</b>\":").
                             replaceAll("\u0018", "").
                             replaceAll(String.fromCharCode(17), ""); //.
