@@ -415,7 +415,7 @@
                                 //console.log("inflated: ", inflated);
                                 try {
                                     prefix = "Decoded GZIP:\n";
-                                    body = new TextDecoder().decode(inflated).replaceAll('>', '>\n').replaceAll('<', '&lt;'); //.replaceAll('>', '&gt;<br>');
+                                    body = new TextDecoder().decode(inflated).replaceAll('>', '>\n'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
                                 } catch (err) {
                                     console.error(err,
                                         "\n      time: ", time,
