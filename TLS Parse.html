@@ -211,14 +211,14 @@
                     inflated = [];
                     hexes_combined = [];
                     enc_json = false;
-                    tr_style = " style='background-color:#000040' ";
+                    tr_style = " style=\"background-color:#000040\" ";
                 } else if (lines[line].includes('laintext after DECRYPTION (')) {
                     io = 'RECVING';
                     io2 = "|READ: TLSv1.2 application_data, length = ";
-                    tr_style = " style='background-color:#400000' ";
+                    tr_style = " style=\"background-color:#400000\" ";
                 } else if (lines[line].includes('|handling exception (')) {
                     io = 'EXCPT';
-                    tr_style = " style='background-color:#FF0000' ";
+                    tr_style = " style=\"background-color:#FF0000\" ";
                     //console.info("HH");
                     io2 = '';
                 }
