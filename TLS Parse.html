@@ -473,7 +473,7 @@
                     //'<td>' + level + '</td>' +
                     '<td>' + io + '</td>' +
                     '<td>' + host + '</td>' +
-                    '<td>' + pkt.replaceAll("\"","&quot;") + '</td>' +
+                    '<td><code>' + pkt.replaceAll('"',"&quot;") + '</code></td>' +
                     '</tr>\n';
                 if (host.length > 0 && io === "SENDING") console.log('Host: ' + host);
                 time = '';
