@@ -194,14 +194,15 @@
                 (
                     lines[line].includes('laintext before ENCRYPTION (') ||
                     lines[line].includes('laintext after DECRYPTION (') ||
-                    lines[line].includes('|handling exception (') ||
+                    //lines[line].includes('|handling exception (') ||
                     lines[line].includes('Received alert message') ||
-                    (lines[line].includes('handshake, length') && lines[line].includes('|WRITE:')) ||
+                    lines[line].includes('handshake, length') ||
                     lines[line].includes('|close') ||
                     lines[line].includes('duplex close of SSLSocket') ||
-                    lines[line].includes('SSLSocket duplex close failed')
-                ) &&
-                !lines[line - 1].includes('handshake,')
+                    lines[line].includes('|WARNING|') ||
+                    lines[line].includes('|ERROR|')
+                )
+                //&& !lines[line - 1].includes('handshake,')
             ) {
                 time = lines[line].split('|')[4];
                 thread = lines[line].split('|')[3];
@@ -234,18 +235,19 @@
                         pkt_len = 0;
                         pkt = lines[line - 1].split("|")[6].split(":")[1].split(",")[0];
                         //tr_style = " style=\"background-color:#404040\" ";
-                    } else if (lines[line].includes("|handling exception (")) {
-                        io = 'EXCPT';
-                        tr_style = " style=\"background-color:#FF0000\" ";
+                    } else if (lines[line].includes(" handshake, length ")) {
+                        if (lines[line].includes("|WRITE:")) {
+                            io = "SENDING";
+                            tr_style = " style=\"background-color:#005A00\" ";
+                        }
+                        else {
+                            io = "RECVING";
+                            tr_style = " style=\"background-color:#005A5A\" ";
+                        }
                         pkt_len = 0;
-                        pkt = "handling exception";
-                        //console.info("HHH");
-                    } else if (lines[line].includes(" handshake, length ") && lines[line].includes("|WRITE:")) {
-                        io = "HANDSHK"
-                        pkt_len = 0;
-                        pkt = "handshake";
+                        pkt = lines[line].split("|")[6].split(":")[1];
                         info_msg=true;
-                        tr_style = " style=\"background-color:#004000\" ";
+                        //tr_style = " style=\"background-color:#004000\" ";
                         //console.info("HHH");
                     } else if (lines[line].includes("|close ") || lines[line].includes("duplex close of SSLSocket")) {
                         pkt_len = 0;
@@ -254,12 +256,19 @@
                         info_msg=true;
                         tr_style = " style=\"background-color:#4D4D4D\" ";
                         //console.info("HHH");
-                    } else if (lines[line].includes("SSLSocket duplex close failed.")) {
+                    } else if (lines[line].includes("|WARNING|")) {
                         pkt_len = 0;
                         io="WARNING";
-                        pkt = "SSLSocket duplex close failed";
+                        pkt = lines[line].split("|")[6];
                         //info_msg=true;
-                        tr_style = " style=\"background-color:#692800\" ";
+                        tr_style = " style=\"background-color:#808000\" ";
+                        //console.info("HHH");
+                    } else if (lines[line].includes("|ERROR|")) {
+                        pkt_len = 0;
+                        io="ERROR";
+                        pkt = lines[line].split("|")[6];
+                        //info_msg=true;
+                        tr_style = " style=\"background-color:#A00000\" ";
                         //console.info("HHH");
                     } else if (line > 1 && lines[line].includes("Received alert message")) {
                         //console.log("aaa");
