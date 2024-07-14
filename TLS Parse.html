@@ -3,6 +3,11 @@
 <head>
     <script src="pako.js"></script>
     <style>
+        pre {
+            margin: 0;
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
         th {
             text-align: center;
             border: 1px solid white;
@@ -478,7 +483,7 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
-                body=body.replaceAll('\u0000','');
+                body=body.replaceAll('\u0000','').replaceAll("<","&lt");
                 //console.log('body: ',time, convertToHex(body));
 
                 if (typeof body !== 'undefined' && (header.toLowerCase().includes("content-type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
@@ -489,7 +494,8 @@
                         //console.log("before: ", body, '"');
                         body = JSON.stringify(JSON.parse(body.replaceAll("\u0000", "").replaceAll("\u0017", "")), null, "\t").
                             //replaceAll("\n", "<br>\n").
-                            replaceAll("\t\"", "    \"<b>").replaceAll("\":", "</b>\":").replaceAll("\u0018", "").replaceAll(String.fromCharCode(17), ""); //.
+                            //replaceAll("\t\"", "    \"<b>").replaceAll("\":", "</b>\":").
+                            replaceAll("\u0018", "").replaceAll(String.fromCharCode(17), ""); //.
                         //replaceAll("\t", "  ");
                         //console.log("after: ",body);
                     } catch (err) {
@@ -502,13 +508,14 @@
                 if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
                 else if (header === '') pkt = body;
                 else pkt = header + '<br><hr>' + body;
-                out = out + '<tr' + tr_style + '>' +
-                    '<td style="width=3000px">' + time + '</td>' +
-                    '<td>' + thread + " | " + thrdID + '</td>' +
-                    //'<td>' + level + '</td>' +
-                    '<td>' + io + '</td>' +
-                    '<td>' + host + '</td>' +
-                    '<td><code>' + pkt.replaceAll('"',"&quot;") + '</code></td>' +
+                out = out +
+                    '<tr' + tr_style + '>' +
+                        '<td style="width=3000px">' + time + '</td>' +
+                        '<td>' + thread + " | " + thrdID + '</td>' +
+                        //'<td>' + level + '</td>' +
+                        '<td>' + io + '</td>' +
+                        '<td>' + host + '</td>' +
+                        '<td><pre>' + pkt + '</pre></td>' +
                     '</tr>\n';
                 if (host.length > 0 && io === "SENDING") console.log('Host: ' + host);
                 time = '';
