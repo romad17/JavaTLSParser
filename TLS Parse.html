@@ -150,19 +150,7 @@
     function displayContents(lines) {
         document.getElementById('space').style.display = "none";
         const element = document.getElementById('file-content');
-        let out = '<table id="myTable">\
-					<thead>\
-						<tr>\
-							<th style="width:200px">Time      <br><button onclick="sortTable(0)">Sort</button><br><input type="text" id="myInput0" onkeyup="myFunction(0)" placeholder="Filter" style="width:180px"></th>\
-							<th style="width:200px">Thread    <br><button onclick="sortTable(1)">Sort</button><br><input type="text" id="myInput1" onkeyup="myFunction(1)" placeholder="Filter" style="width:180px"></th>\
-							<!--<th style="width:50px" >Thrd_ID   <br><button onclick="sortTable(2)">Sort</button><br><input type="text" id="myInput2" onkeyup="myFunction(2)" placeholder="Filter" style="width:40px"></th>\
-							<th style="width:50px" >Level     <br><button onclick="sortTable(3)">Sort</button><br><input type="text" id="myInput3" onkeyup="myFunction(3)" placeholder="Filter" style="width:40px"></th> -->\
-							<th style="width:60px" >I/O       <br><button onclick="sortTable(4)">Sort</button><br><input type="text" id="myInput4" onkeyup="myFunction(4)" placeholder="Filter" style="width:50px"></th>\
-							<th style="width:200px">Host      <br><button onclick="sortTable(5)">Sort</button><br><input type="text" id="myInput5" onkeyup="myFunction(5)" placeholder="Filter" style="width:180px"></th>\
-							<th                    >Content   <br><button onclick="sortTable(6)">Sort</button><br><input type="text" id="myInput6" onkeyup="myFunction(6)" placeholder="Filter"></th>\
-						</tr>\
-					</thead>\
-					<tbody>';
+
         let hexes = [];
         let pkt = '';
         let time = '';
@@ -180,10 +168,6 @@
         let pkt_len = -1;
         let thread_input = "";
         let thread_filter = false;
-        if (document.getElementById('thread-input').value !== "") {
-            thread_input = document.getElementById('thread-input').value;
-            thread_filter = true;
-        }
         let inflated;
         let to_inflate = [];
         let padded_packet = 0;
@@ -193,7 +177,28 @@
         let enc_json = false;
         let prefix = "";
         let info_msg = false;
-        for (let line = 1; line < lines.length; line++) {
+        let line;
+
+        let out = '<table id="myTable">\
+					<thead>\
+						<tr>\
+							<th style="width:200px">Time      <br><button onclick="sortTable(0)">Sort</button><br><input type="text" id="myInput0" onkeyup="myFunction(0)" placeholder="Filter" style="width:180px"></th>\
+							<th style="width:200px">Thread    <br><button onclick="sortTable(1)">Sort</button><br><input type="text" id="myInput1" onkeyup="myFunction(1)" placeholder="Filter" style="width:180px"></th>\
+							<!--<th style="width:50px" >Thrd_ID   <br><button onclick="sortTable(2)">Sort</button><br><input type="text" id="myInput2" onkeyup="myFunction(2)" placeholder="Filter" style="width:40px"></th>\
+							<th style="width:50px" >Level     <br><button onclick="sortTable(3)">Sort</button><br><input type="text" id="myInput3" onkeyup="myFunction(3)" placeholder="Filter" style="width:40px"></th> -->\
+							<th style="width:60px" >I/O       <br><button onclick="sortTable(4)">Sort</button><br><input type="text" id="myInput4" onkeyup="myFunction(4)" placeholder="Filter" style="width:50px"></th>\
+							<th style="width:200px">Host      <br><button onclick="sortTable(5)">Sort</button><br><input type="text" id="myInput5" onkeyup="myFunction(5)" placeholder="Filter" style="width:180px"></th>\
+							<th                    >Content   <br><button onclick="sortTable(6)">Sort</button><br><input type="text" id="myInput6" onkeyup="myFunction(6)" placeholder="Filter"></th>\
+						</tr>\
+					</thead>\
+					<tbody>';
+
+        if (document.getElementById('thread-input').value !== "") {
+            thread_input = document.getElementById('thread-input').value;
+            thread_filter = true;
+        }
+
+        for (line = 1; line < lines.length; line++) {
             if (
                 (thread_filter && lines[line].includes('|' + thread_input) || !thread_filter) &&
                 (
@@ -369,7 +374,9 @@
 
                 if (pkt.startsWith('HTTP') || pkt.startsWith('GET') || pkt.startsWith('POST') || pkt.startsWith('PUT')) {
                     header = pkt.split('\r\n\r\n', 1)[0];
-                    if (header.includes('Content-Encoding: gzip') || header.startsWith('GET') || !pkt.includes('\r\n\r\n')) body = '';
+                    if (header.toLowerCase().includes('content-encoding: gzip') || header.startsWith('GET') || !pkt.includes('\r\n\r\n')) {
+                        body = '';
+                    }
                     else body = pkt.split('\r\n\r\n', 2)[1]; //.split('<br><br>', 2)[1];
                     //console.log('pkt: ', pkt);
                     //console.log('body: ', body);
@@ -422,6 +429,7 @@
                     } else {
                         //console.log("hexes_combined: ", time, hexes_combined);
                         let q = 0;
+                        //console.log("process chunks");
                         for (let i = 0; i < hexes_combined.length; i++) {
                             if (hexes_combined[i] === "30" && hexes_combined[i + 1] === "0D" && hexes_combined[i + 2] === "0A" && hexes_combined[i + 3] === "0D" && hexes_combined[i + 4] === "0A") {
                                 //console.log('if1');
@@ -443,34 +451,11 @@
                             }
                         }
 
-                        //console.log("data_chunks: ", data_chunks);
-                        for (let hx = 0; hx < data_chunks.length; hx++) {
-                            to_inflate.push(parseInt(data_chunks[hx], 16));
-                        }
-                        //console.log("to_inflate: ", to_inflate);
-
                         if (content_gzip) {
-                            try {
-                                inflated = pako.inflate(new Uint8Array(to_inflate));
-                                //console.log("inflated: ", inflated);
-                                try {
-                                    prefix = "Decoded GZIP:\n";
-                                    body = new TextDecoder().decode(inflated).replaceAll('>', '>\n'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
-                                } catch (err) {
-                                    console.error(err,
-                                        "\n      time: ", time,
-                                        "\n to decode: ", inflated);
-                                }
-                            } catch (err) {
-                                console.error(err,
-                                    "\n         TS: ", time,
-                                    "\n       line: ", line,
-                                    "\n     Thread: ", thread,
-                                    "\ndata_chunks: ", data_chunks,
-                                    "\n to inflate: ", to_inflate,
-                                    "\n   in ASCII: ", to_inflate.map(hex => String.fromCharCode(hex)).join(""));
-                            }
-
+                            prefix = "Decoded GZIP:\n";
+                            //console.log("X0: ",to_inflate);
+                            body=decode_gzip(data_chunks,time,line,thread);
+                            //console.log("X: ", body);
                             content_gzip = false;
                         } else {
                             prefix = "Combined Chunks: \n";
@@ -483,6 +468,11 @@
                     }
                 }
                 //************ /\/\ Chunks /\/\ ***********
+                else {
+                    //console.log("hexes: ",hexes);
+                    //console.log("hexes body: ",hexes_body);
+                    if (body==="") body=decode_gzip(hexes_body,time,line,thread);
+                }
                 body=body.replaceAll('\u0000','').replaceAll("<","&lt");
                 //console.log('body: ',time, convertToHex(body));
 
@@ -505,7 +495,9 @@
                 //if (body.includes("html")) console.log("body 3: ", body);
                 body = prefix + body;
                 header = header.replaceAll("\r\n", "\n<b>").replaceAll(":", "</b>:");
-                if ((header.includes('Content-Encoding: gzip') && next_packet_is_chunk) && header === '') pkt = body;
+                if ((header.toLowerCase().includes('content-encoding: gzip') && next_packet_is_chunk) && header === '') {
+                    pkt = body;
+                }
                 else if (header === '') pkt = body;
                 else pkt = header + '<br><hr>' + body;
                 out = out +
@@ -594,6 +586,40 @@
             //console.log(chunk,parseInt(str, 16))
             return parseInt(str, 16);
         } else return null;
+    }
+
+    function decode_gzip(payload,time,line,thread) {
+        let inflated;
+        let output;
+        let toinflate=[];
+        //console.log("payload: ", payload);
+
+        //console.log("data_chunks: ", data_chunks);
+        for (let hx = 0; hx < payload.length; hx++) {
+            toinflate.push(parseInt(payload[hx], 16));
+        }
+        //console.log("to_inflate: ", to_inflate);
+
+        try {
+            inflated = pako.inflate(new Uint8Array(toinflate));
+            //console.log("inflated: ", inflated);
+            try {
+                output = new TextDecoder().decode(inflated).replaceAll('>', '>\n'); //.replaceAll('<', '&lt;').replaceAll('>', '&gt;<br>');
+            } catch (err) {
+                console.error(err,
+                    "\n      time: ", time,
+                    "\n to decode: ", inflated);
+            }
+        } catch (err) {
+            console.error(err,
+                "\n         TS: ", time,
+                "\n       line: ", line,
+                "\n     Thread: ", thread,
+                "\n    payload: ", payload,
+                "\n to inflate: ", toinflate,
+                "\n   in ASCII: ", toinflate.map(hex => String.fromCharCode(hex)).join(""));
+        }
+        return output;
     }
 </script>
 </body>
