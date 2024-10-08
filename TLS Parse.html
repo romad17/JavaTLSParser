@@ -473,7 +473,12 @@
                     //console.log("hexes body: ",hexes_body);
                     if (body==="") body=decode_gzip(hexes_body,time,line,thread);
                 }
-                body=body.replaceAll('\u0000','').replaceAll("<","&lt");
+                try {
+                    body=body.replaceAll('\u0000','').replaceAll("<","&lt");
+                } catch (e) {
+                    console.error(e);
+                }
+
                 //console.log('body: ',time, convertToHex(body));
 
                 if (typeof body !== 'undefined' && (header.toLowerCase().includes("content-type: application/json") || enc_json) && !next_packet_is_chunk && body.length > 0) {
