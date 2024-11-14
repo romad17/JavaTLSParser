@@ -459,7 +459,8 @@
                             content_gzip = false;
                         } else {
                             prefix = "Combined Chunks: \n";
-                            body = to_inflate.map(hex => String.fromCharCode(hex)).join("").replaceAll("<", "&lt;").replaceAll(">", "&gt;<br>");
+                            //console.log(data_chunks);
+                            body = data_chunks.map(hex => String.fromCharCode(parseInt(hex, 16))).join("").replaceAll('><', '>\n<');
                         }
                         data_chunks = [];
                         to_inflate = [];
